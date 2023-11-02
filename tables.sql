@@ -66,3 +66,32 @@ CREATE TABLE IF NOT EXISTS Bids (
 	FOREIGN KEY (BookID) REFERENCES BookListing(BookID),
 	FOREIGN KEY (UserID) REFERENCES Customer(UserID)
 );
+
+CREATE TABLE BookLending (
+    LendingID INT PRIMARY KEY AUTO_INCREMENT,
+    BorrowerUserID INT,
+    BookID INT,
+    LendingStartDate DATE NOT NULL,
+    LendingEndDate DATE NOT NULL,
+    LateFee INT,
+    FOREIGN KEY (BorrowerUserID) REFERENCES CUSTOMER(UserID),
+    FOREIGN KEY (BookID) REFERENCES BookListing(BookID)
+);
+
+CREATE TABLE NotificationRequests (
+    RequestID INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT,
+    BookID INT,
+    RequestDate DATE NOT NULL,
+    FOREIGN KEY (UserID) REFERENCES CUSTOMER(UserID),
+    FOREIGN KEY (BookID) REFERENCES BookListing(BookID)
+);
+
+
+CREATE TABLE NotificationPreferences (
+    NotificationPreferencesId INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT,           
+    EmailNotifications BOOLEAN,      
+    SMSNotifications BOOLEAN,
+    FOREIGN KEY (UserID) REFERENCES CUSTOMER(UserID)
+);
