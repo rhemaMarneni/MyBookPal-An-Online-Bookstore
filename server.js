@@ -59,116 +59,61 @@ function viewUserCart(req, res) {
 }
 
 // Function to update the cart
-function updateCart(req, res) {
-  if (req.method === 'POST' && req.url === '/update_cart') {
-    let requestBody = '';
-    req.on('data', (data) => {
-      requestBody += data;
-    });
-
-    req.on('end', () => {
-      const { book_id, user_id, action } = JSON.parse(requestBody);
-
-      if (!book_id || !user_id || !action || (action !== 'add' && action !== 'remove')) {
-        res.statusCode = 400; // Bad Request
-        res.end('Invalid parameters');
-        return;
-      }
-
-      if (action === 'add') {
-        const updateQuery = `
-          INSERT INTO Cart (UserID, BookID, Quantity)
-          VALUES (?, ?, 1)
-          ON DUPLICATE KEY UPDATE Quantity = Quantity + 1;
-        `;
-
-        connection.query(updateQuery, [user_id, book_id], (err) => {
-          if (err) {
-            console.error('Error updating the cart: ' + err.stack);
-            res.statusCode = 500; 
-            res.end('Error updating the cart');
-            return;
-          }
-
-          res.statusCode = 200; // OK
-          res.end('Product added to the cart');
-        });
-      } else if (action === 'remove') {
-        const updateQuantityQuery = `
-          UPDATE Cart
-          SET Quantity = Quantity - 1
-          WHERE UserID = ? AND BookID = ? AND Quantity > 0;
-        `;
-
-        const deleteQuery = `
-          DELETE FROM Cart
-          WHERE UserID = ? AND BookID = ? AND Quantity = 0;
-        `;
-
-        connection.query(updateQuantityQuery, [user_id, book_id], (err, result) => {
-          if (err) {
-            console.error('Error updating the cart: ' + err.stack);
-            res.statusCode = 500; 
-            res.end('Error updating the cart');
-            return;
-          }
-
-          if (result.affectedRows === 0) {
-            res.statusCode = 400; 
-            res.end('Product not in the cart');
-            return;
-          }
-
-          res.statusCode = 200; // OK
-          res.end('Product removed from the cart');
-
-          connection.query(deleteQuery, [user_id, book_id], (err) => {
-            if (err) {
-              console.error('Error deleting from the cart: ' + err.stack);
-            }
-          });
-        });
-      }
-    });
+function updateCart(book_id, user_id, action) {
+  if (!book_id || !user_id || !action || (action !== 'add' && action !== 'remove')) {
+    console.error('Invalid parameters');
+    return;
   }
-}
 
-function updateBookQuantity(req, res) {
-  if (req.method === 'PUT' && req.url === '/update_book_quantity') {
-    let requestBody = '';
-    req.on('data', (data) => {
-      requestBody += data;
-    });
+  if (action === 'add') {
+    const updateQuery = `
+      INSERT INTO Cart (UserID, BookID, Quantity)
+      VALUES (?, ?, 1)
+      ON DUPLICATE KEY UPDATE Quantity = Quantity + 1;
+    `;
 
-    req.on('end', () => {
-      const { bookId, quantity } = JSON.parse(requestBody);
-
-      if (!bookId || !quantity || isNaN(quantity)) {
-        res.statusCode = 400; // Bad Request
-        res.end('Invalid parameters');
+    connection.query(updateQuery, [user_id, book_id], (err) => {
+      if (err) {
+        console.error('Error updating the cart: ' + err.stack);
+        // Here, you might want to log the error and handle it appropriately
         return;
       }
 
-      const updateQuery = `
-        UPDATE BookListing
-        SET Quantity = Quantity - ?
-        WHERE BookID = ? AND Quantity >= ?;
-      `;
+      // You can return a success message or log it as needed.
+      console.log('Product added to the cart');
+    });
+  } else if (action === 'remove') {
+    const updateQuantityQuery = `
+      UPDATE Cart
+      SET Quantity = Quantity - 1
+      WHERE UserID = ? AND BookID = ? AND Quantity > 0;
+    `;
 
-      connection.query(updateQuery, [quantity, bookId, quantity], (err, result) => {
+    const deleteQuery = `
+      DELETE FROM Cart
+      WHERE UserID = ? AND BookID = ? AND Quantity = 0;
+    `;
+
+    connection.query(updateQuantityQuery, [user_id, book_id], (err, result) => {
+      if (err) {
+        console.error('Error updating the cart: ' + err.stack);
+        // Handle the error appropriately if needed
+        return;
+      }
+
+      if (result.affectedRows === 0) {
+        // You can return an error message or log it as required
+        console.log('Product not in the cart');
+        return;
+      }
+
+      // You can return a success message or log it as needed.
+      console.log('Product removed from the cart');
+
+      connection.query(deleteQuery, [user_id, book_id], (err) => {
         if (err) {
-          console.error('Error updating book quantity: ' + err.stack);
-          res.statusCode = 500; // Internal Server Error
-          res.end('Internal Server Error');
-          return;
-        }
-
-        if (result.affectedRows === 1) {
-          res.statusCode = 200; // OK
-          res.end('Book quantity updated');
-        } else {
-          res.statusCode = 400; // Bad Request
-          res.end('Failed to update book quantity');
+          console.error('Error deleting from the cart: ' + err.stack);
+          // Handle the error appropriately if needed
         }
       });
     });
@@ -176,70 +121,56 @@ function updateBookQuantity(req, res) {
 }
 
 
+function updateBookQuantity(bookId, quantity, callback) {
+  const updateQuery = `
+    UPDATE BookListing
+    SET Quantity = Quantity - ?
+    WHERE BookID = ? AND Quantity >= ?;
+  `;
+
+  connection.query(updateQuery, [quantity, bookId, quantity], (err, result) => {
+    if (err) {
+      console.error('Error updating book quantity: ' + err.stack);
+      return callback('Internal Server Error');
+    }
+
+    if (result.affectedRows === 1) {
+      return callback(null, 'Book quantity updated');
+    } else {
+      return callback('Failed to update book quantity');
+    }
+  });
+}
+
 // Define the userWallets object globally
 let userWallets = {};
-
-function updateWallet(req, res) {
-  if (req.method === 'PUT' && req.url === '/update_wallet') {
-    let requestBody = '';
-    req.on('data', (data) => {
-      requestBody += data;
-    });
-
-    req.on('end', () => {
-      const { user_id, amount, action } = JSON.parse(requestBody);
-
-      if (!user_id || !amount || !action || (action !== 'add' && action !== 'sub')) {
-        res.statusCode = 400; // Bad Request
-        res.end('Invalid parameters');
-        return;
-      }
-
-      if (!userWallets[user_id]) {
-        userWallets[user_id] = 0; // Initialize the user's wallet if it doesn't exist
-      }
-
-      if (action === 'add') {
-        userWallets[user_id] += amount; // Add to the user's wallet
-      } else if (action === 'sub') {
-        if (amount > userWallets[user_id]) {
-          res.statusCode = 400; 
-          res.end('Insufficient wallet balance, please add balance to the wallet');
-          return;
-        }
-        userWallets[user_id] -= amount; // Subtract from the user's wallet
-      }
-
-      const query = `
-        UPDATE Wallet
-        SET WalletBalance = ?
-        WHERE UserID = ?
-      `;
-
-      connection.query(
-        query,
-        [userWallets[user_id], user_id],
-        (err, result) => {
-          if (err) {
-            console.error('Error updating wallet: ' + err.stack);
-            res.statusCode = 500; 
-            res.end('Internal Server Error');
-            return;
-          }
-
-          if (result.affectedRows === 0) {
-            res.statusCode = 404; 
-            res.end('User wallet not found');
-            return;
-          }
-
-          res.statusCode = 200; 
-          res.end('Updated wallet for user');
-          return;
-        }
-      );
-    });
+function updateWallet(user_id, amount, action, callback) {
+  if (!userWallets[user_id]) {
+    userWallets[user_id] = 0; // Initialize the user's wallet if it doesn't exist
   }
+  if (action === 'add') {
+    userWallets[user_id] += amount; // Add to the user's wallet
+  } else if (action === 'sub') {
+    if (amount > userWallets[user_id]) {
+      return callback('Insufficient wallet balance, please add balance to the wallet');
+    }
+    userWallets[user_id] -= amount; // Subtract from the user's wallet
+  }
+  const query = `
+    UPDATE Wallet
+    SET WalletBalance = ?
+    WHERE UserID = ?
+  `;
+  connection.query(query, [userWallets[user_id], user_id], (err, result) => {
+    if (err) {
+      console.error('Error updating wallet: ' + err.stack);
+      return callback('Internal Server Error');
+    }
+    if (result.affectedRows === 0) {
+      return callback('User wallet not found');
+    }
+    return callback(null, 'Updated wallet for user');
+  });
 }
 
 function viewPurchaseHistory(req, res) {
@@ -274,149 +205,96 @@ function viewPurchaseHistory(req, res) {
   }
 }
 
-function getWalletBalance(req, res) {
-  if (req.method === 'GET' && req.url.startsWith('/wallet_balance')) {
-    const queryParameters = new URLSearchParams(req.url.split('?')[1]);
-    const userId = queryParameters.get('id');
-    if (!userId || isNaN(userId)) {
-      res.statusCode = 400;
-      res.end('Invalid User ID');
-      return;
+function getWalletBalance(userId, callback) {
+  if (!userId || isNaN(userId)) {
+    return callback('Invalid User ID');
+  }
+
+  const selectQuery = `
+    SELECT WalletBalance from wallet where UserID = ?
+  `;
+
+  connection.query(selectQuery, [userId], (err, results) => {
+    if (err) {
+      return callback('Error querying the database');
     }
-    const selectQuery = `
-      SELECT WalletBalance from wallet where UserID = ?
-    `;
 
-    connection.query(selectQuery, [userId], (err, results) => {
-      if (err) {
-        console.error('Error querying the database: ' + err.stack);
-        res.statusCode = 500;
-        res.end('Internal Server Error');
-        return;
-      }
+    if (results.length === 0) {
+      return callback(`No wallet balance found for user ${userId}`);
+    }
 
-      if (results.length === 0) {
-        res.statusCode = 404; // Not Found
-        res.end(`No wallet balance found for user ${userId}`);
-      } else {
-        const walletBalance = results[0].WalletBalance;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ balance: walletBalance }));
-      }
-    });
+    const walletBalance = results[0].WalletBalance;
+    return callback(null, walletBalance);
+  });
+}
+
+
+function checkQuantity(bookId, quantity) {
+  if (!bookId || isNaN(bookId) || !quantity || isNaN(quantity)) {
+    console.error('Invalid parameters');
+    return false; // Indicate that the quantity is not valid
+  }
+
+  const selectQuery = `
+    SELECT * from BookListing where BookID = ? AND Quantity >= ?
+  `;
+
+  const results = connection.query(selectQuery, [bookId, quantity]);
+
+  if (results.length > 0) {
+    return true; // Quantity is available
+  } else {
+    return false; // Quantity is not available
   }
 }
 
-function checkQuantity(req, res) {
-  if (req.method === 'GET' && req.url.startsWith('/check_quantity')) {
-    const queryParameters = new URLSearchParams(req.url.split('?')[1]);
-    const bookId = queryParameters.get('book_id');
-    const quantity = queryParameters.get('quantity');
-    if (!bookId || isNaN(bookId) || !quantity || isNaN(quantity)) {
-      res.statusCode = 400;
-      res.end('Invalid parameters');
-      return;
-    }
-    const selectQuery = `
-      SELECT * from BookListing where BookID = ? AND Quantity >= ?
-    `;
 
-    connection.query(selectQuery, [bookId, quantity], (err, results) => {
-      if (err) {
-        console.error('Error querying the database: ' + err.stack);
-        res.statusCode = 500;
-        res.end('Internal Server Error');
-        return;
-      }
-
-      if (results.length > 0) {
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ available: true }));
-      } else {
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ available: false }));
-      }
-    });
+function computePrice(BookID, Quantity, callback) {
+  if (!BookID || isNaN(BookID) || !Quantity || isNaN(Quantity)) {
+    return callback('Invalid parameters');
   }
+
+  const selectQuery = `
+    SELECT Price, Quantity from BookListing where BookID = ? AND Quantity >= ?
+  `;
+
+  connection.query(selectQuery, [BookID, Quantity], (err, results) => {
+    if (err) {
+      return callback('Error querying the database');
+    }
+
+    if (results.length > 0) {
+      const price = results[0].Price * Quantity;
+      return callback(null, price);
+    } else {
+      return callback('Product not found or insufficient quantity');
+    }
+  });
 }
 
-function computePrice(req, res) {
-  if (req.method === 'GET' && req.url.startsWith('/compute_price')) {
-    const queryParameters = new URLSearchParams(req.url.split('?')[1]);
-    const bookId = queryParameters.get('book_id');
-    const quantity = queryParameters.get('quantity');
-    if (!bookId || isNaN(bookId) || !quantity || isNaN(quantity)) {
-      res.statusCode = 400;
-      res.end('Invalid parameters');
-      return;
-    }
-    const selectQuery = `
-      SELECT Price, Quantity from BookListing where BookID = ? AND Quantity >= ?
-    `;
 
-    connection.query(selectQuery, [bookId, quantity], (err, results) => {
+function addToPurchaseHistory(UserID, BookID, Quantity, totalPrice, callback) {
+  // Get the current time in the format 'YYYY-MM-DD HH:MM:SS'
+  const paymentDateTime = moment().format('YYYY-MM-DD HH:mm:ss');
+  const insertQuery = `
+    INSERT INTO PurchaseHistory (UserID, Amount, PaymentDateTime, BookID, Quantity)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+  connection.query(
+    insertQuery,
+    [UserID, totalPrice, paymentDateTime, BookID, Quantity],
+    (err, result) => {
       if (err) {
-        console.error('Error querying the database: ' + err.stack);
-        res.statusCode = 500;
-        res.end('Internal Server Error');
-        return;
+        console.error('Error inserting into PurchaseHistory: ' + err.stack);
+        return callback(false); // Indicate an internal server error
       }
-
-      if (results.length > 0) {
-        const price = results[0].Price * quantity;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ total_price: price }));
+      if (result.affectedRows === 1) {
+        return callback(true); // Indicate success
       } else {
-        res.statusCode = 404; // Not Found
-        res.end('Product not found or insufficient quantity');
+        return callback(false); // Indicate failure
       }
-    });
-  }
-}
-
-function addToPurchaseHistory(req, res) {
-  if (req.method === 'POST' && req.url === '/add_to_purchase_history') {
-    let requestBody = '';
-    req.on('data', (data) => {
-      requestBody += data;
-    });
-    req.on('end', () => {
-      const { UserID, BookID, Quantity, totalPrice } = JSON.parse(requestBody);
-      if (!UserID || !BookID || !Quantity || !totalPrice) {
-        res.statusCode = 400; // Bad Request
-        res.end('Invalid parameters');
-        return;
-      }
-      // Get the current time in the format 'YYYY-MM-DD HH:MM:SS'
-      const paymentDateTime = moment().format('YYYY-MM-DD HH:mm:ss');
-
-      const insertQuery = `
-        INSERT INTO PurchaseHistory (UserID, Amount, PaymentDateTime, BookID, Quantity)
-        VALUES (?, ?, ?, ?, ?)
-      `;
-
-      connection.query(
-        insertQuery,
-        [UserID, totalPrice, paymentDateTime, BookID, Quantity],
-        (err, result) => {
-          if (err) {
-            console.error('Error inserting into PurchaseHistory: ' + err.stack);
-            res.statusCode = 500; // Internal Server Error
-            res.end('Error adding product to PurchaseHistory');
-            return;
-          }
-
-          if (result.affectedRows === 1) {
-            res.statusCode = 200; // OK
-            res.end('Product added to PurchaseHistory');
-          } else {
-            res.statusCode = 500; // Internal Server Error
-            res.end('Failed to add product to PurchaseHistory');
-          }
-        }
-      );
-    });
-  }
+    }
+  );
 }
 
 function performPurchase(UserID, BookID, Quantity, totalPrice) {
@@ -446,16 +324,16 @@ function purchaseProduct(req, res) {
         return;
       }
       // Check if the requested quantity is available in the BookListing
-      if (!checkQuantity(req, res, BookID, Quantity)) {
+      if (!checkQuantity(BookID, Quantity)) {
         return; 
       }
       // Calculate the total price for the products
-      const totalPrice = computePrice(req, res, BookID, Quantity);
-      if (totalPrice === null) {
+      const totalPrice = computePrice(BookID, Quantity);
+      if (totalPrice === 0) {
         return; 
       }
       // Check if the user has enough balance in their wallet
-      const userWalletBalance = getWalletBalance(req, res, UserID);
+      const userWalletBalance = getWalletBalance(UserID);
       if (userWalletBalance < totalPrice) {
         res.statusCode = 400; // Bad Request
         res.end('Insufficient wallet balance');
@@ -474,19 +352,18 @@ function purchaseProduct(req, res) {
   }
 }
 
-
 const server = http.createServer((req, res) => {
   connectToDatabase();
   viewUserCart(req, res);
-  updateCart(req, res);
-  updateWallet(req, res);
   viewPurchaseHistory(req, res);
-  getWalletBalance(req, res);
-  checkQuantity(req, res);
-  computePrice(req, res);
-  addToPurchaseHistory(req, res);
   purchaseProduct(req, res);
-  updateBookQuantity(req, res);
+  //updateCart(BookID, UserID, action);
+  //updateWallet(UserID, totalPrice,action);
+  //getWalletBalance(UserID);
+  //checkQuantity(bookId, quantity);
+ // computePrice(BookID, Quantity);
+  //addToPurchaseHistory(UserID, BookID, Quantity, totalPrice, callback);
+  //updateBookQuantity(BookID, Quantity);
 });
 
 server.listen(port, () => {
