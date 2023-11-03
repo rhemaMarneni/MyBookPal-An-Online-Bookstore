@@ -66,3 +66,16 @@ CREATE TABLE IF NOT EXISTS Bids (
 	FOREIGN KEY (BookID) REFERENCES BookListing(BookID),
 	FOREIGN KEY (UserID) REFERENCES Customer(UserID)
 );
+
+CREATE TABLE IF NOT EXISTS Cart (
+    UserID INT,
+    BookID INT,
+    Quantity INT,
+    FOREIGN KEY (UserID) REFERENCES CUSTOMER(UserID),
+    FOREIGN KEY (BookID) REFERENCES BookListing(BookID)
+);
+
+ALTER TABLE Cart
+ADD CONSTRAINT uc_Cart_User_Book UNIQUE (UserID, BookID);
+
+
