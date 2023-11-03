@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS BookListing (
     Photos VARCHAR(255)
 );
 
-
 CREATE TABLE IF NOT EXISTS PurchaseHistory (
     PurchaseID INT AUTO_INCREMENT PRIMARY KEY,
     UserID INT,
