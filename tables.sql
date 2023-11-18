@@ -21,15 +21,16 @@ CREATE TABLE IF NOT EXISTS Wallet (
 );
 
 CREATE TABLE IF NOT EXISTS BookListing (
-    BookID INT PRIMARY KEY,
-    Title VARCHAR(255),
-    Author VARCHAR(255),
-    Book_condition VARCHAR(50),
-    Price DECIMAL(10, 2),
-    Genre VARCHAR(100),
-    Book_description TEXT,
-    Quantity INT,
-    Auction BOOLEAN,
+    BookID INT AUTO_INCREMENT PRIMARY KEY, 
+    SellerID INT NOT NULL,
+    Title VARCHAR(255) NOT NULL,
+    Author VARCHAR(255) NOT NULL,
+    Book_condition VARCHAR(50) NOT NULL,
+    Price DECIMAL(10, 2) NOT NULL,
+    Genre VARCHAR(100) NOT NULL,
+    Book_description TEXT NOT NULL,
+    Quantity INT NOT NULL,
+    Auction TINYINT(1) DEFAULT 0,
     Photos VARCHAR(255)
 );
 
