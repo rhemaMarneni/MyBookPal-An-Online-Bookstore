@@ -105,3 +105,17 @@ CREATE TABLE IF NOT EXISTS Cart (
     FOREIGN KEY (UserID) REFERENCES CUSTOMER(UserID),
     FOREIGN KEY (BookID) REFERENCES BookListing(BookID)
 );
+CREATE TABLE CustomerRepresentative (
+    user_id INT,
+    is_admin BOOLEAN,
+    PRIMARY KEY (user_id),
+    FOREIGN KEY (user_id) REFERENCES CUSTOMER (UserID)
+);
+
+INSERT INTO CustomerRepresentative (user_id, is_admin)
+VALUES
+  (1, true),
+  (2, false),
+  (3, true),
+  (4, false),
+  (5, true);
