@@ -232,6 +232,7 @@ function performPurchase(UserID, BookID, Quantity, totalPrice) {
   });
 }
 
+//Verify if the inventory has sufficient stock that user intends to make a purchase
 function checkQuantity(bookId, quantity) {
   return new Promise((resolve, reject) => {
     const selectQuery = 'SELECT * from BookListing where BookID = ? AND Quantity >= ?';
@@ -248,6 +249,7 @@ function checkQuantity(bookId, quantity) {
   });
 }
 
+//Computes and returns the final purchase value for the products that are being checked out
 function computePrice(bookId, quantity) {
   return new Promise((resolve, reject) => {
     const selectQuery = 'SELECT Price, Quantity from BookListing where BookID = ? AND Quantity >= ?';
@@ -269,6 +271,7 @@ function computePrice(bookId, quantity) {
   });
 }
 
+//Function to get the user's wallet amount - Used when user intends to make a purchase
 function getWalletBalance(userId) {
   return new Promise((resolve, reject) => {
     const selectQuery = 'SELECT WalletBalance FROM wallet WHERE UserID = ?';
@@ -290,6 +293,7 @@ function getWalletBalance(userId) {
   });
 }
 
+//Function called when a http request is initiated to checkout from the cart
 function purchaseProduct(req, res) {
   console.log('Received a purchase request');
 
@@ -383,6 +387,47 @@ function viewUserCart(req, res) {
     });
 }
 
+// Function called when the user wants to check his past purchase history
+function viewPurchaseHistory(req, res) {
+  if (req.method === 'GET' && req.url.startsWith('/purchase_history')) {
+    const queryParameters = new URLSearchParams(req.url.split('?')[1]);
+    const userId = queryParameters.get('id');
+
+    if (!userId || isNaN(userId)) {
+      res.statusCode = 400; // Bad Request
+      res.end('Invalid User ID');
+      return;
+    }
+
+    const selectQuery = 'SELECT * from PurchaseHistory where UserID = ?';
+
+    new Promise((resolve, reject) => {
+      connection.query(selectQuery, [userId], (err, results) => {
+        if (err) {
+          console.error('Error querying the database: ' + err.stack);
+          reject(err);
+          return;
+        }
+
+        resolve(results);
+      });
+    })
+      .then((results) => {
+        if (results.length === 0) {
+          res.statusCode = 404; // Not Found
+          res.end(`There are no previous orders for user ${userId}`);
+        } else {
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(results));
+        }
+      })
+      .catch((error) => {
+        res.statusCode = 500;
+        res.end('Internal Server Error');
+      });
+  }
+}
+
 const server = http.createServer((req, res) => {
   console.log(`Received request: ${req.method} ${req.url}`);
 
@@ -390,7 +435,10 @@ const server = http.createServer((req, res) => {
     viewUserCart(req, res);
   } else if (req.method === 'POST' && req.url.startsWith('/purchase_product')) {
     purchaseProduct(req, res);
-  } else {
+  } else if (req.method === 'GET' && req.url.startsWith('/purchase_history')) {
+    viewPurchaseHistory(req, res);
+  } 
+  else {
     console.log('Invalid request endpoint or method');
     res.statusCode = 404;
     res.end('Not Found');
