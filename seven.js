@@ -10,7 +10,6 @@ const connection = mysql.createConnection({
   password: 'heythere',
   database: 'project',
 });
-
 // Function to handle database connection
 function connectToDatabase() {
   connection.connect((err) => {
@@ -133,114 +132,107 @@ function updateCart(req, res) {
   }
 }
 
-function updateBookQuantity(req, res) {
-  if (req.method === 'PUT' && req.url === '/update_book_quantity') {
-    let requestBody = '';
-    req.on('data', (data) => {
-      requestBody += data;
-    });
-
-    req.on('end', () => {
-      const { bookId, quantity } = JSON.parse(requestBody);
-
-      if (!bookId || !quantity || isNaN(quantity)) {
-        res.statusCode = 400; // Bad Request
-        res.end('Invalid parameters');
+function getWalletBalance(req, res) {
+    if (req.method === 'GET' && req.url.startsWith('/wallet_balance')) {
+      const queryParameters = new URLSearchParams(req.url.split('?')[1]);
+      const userId = queryParameters.get('id');
+      if (!userId || isNaN(userId)) {
+        res.statusCode = 400;
+        res.end('Invalid User ID');
         return;
       }
-
-      const updateQuery = `
-        UPDATE BookListing
-        SET Quantity = Quantity - ?
-        WHERE BookID = ? AND Quantity >= ?;
+      const selectQuery = `
+        SELECT WalletBalance from wallet where UserID = ?
       `;
-
-      connection.query(updateQuery, [quantity, bookId, quantity], (err, result) => {
+  
+      connection.query(selectQuery, [userId], (err, results) => {
         if (err) {
-          console.error('Error updating book quantity: ' + err.stack);
-          res.statusCode = 500; // Internal Server Error
+          console.error('Error querying the database: ' + err.stack);
+          res.statusCode = 500;
           res.end('Internal Server Error');
           return;
         }
-
-        if (result.affectedRows === 1) {
-          res.statusCode = 200; // OK
-          res.end('Book quantity updated');
+  
+        if (results.length === 0) {
+          res.statusCode = 404; // Not Found
+          res.end(`No wallet balance found for user ${userId}`);
         } else {
-          res.statusCode = 400; // Bad Request
-          res.end('Failed to update book quantity');
+          const walletBalance = results[0].WalletBalance;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ balance: walletBalance }));
         }
       });
-    });
+    }
   }
-}
-
 
 // Define the userWallets object globally
 let userWallets = {};
 
 function updateWallet(req, res) {
-  if (req.method === 'PUT' && req.url === '/update_wallet') {
-    let requestBody = '';
-    req.on('data', (data) => {
-      requestBody += data;
-    });
-
-    req.on('end', () => {
-      const { user_id, amount, action } = JSON.parse(requestBody);
-
-      if (!user_id || !amount || !action || (action !== 'add' && action !== 'sub')) {
-        res.statusCode = 400; // Bad Request
-        res.end('Invalid parameters');
-        return;
-      }
-
-      if (!userWallets[user_id]) {
-        userWallets[user_id] = 0; // Initialize the user's wallet if it doesn't exist
-      }
-
-      if (action === 'add') {
-        userWallets[user_id] += amount; // Add to the user's wallet
-      } else if (action === 'sub') {
-        if (amount > userWallets[user_id]) {
-          res.statusCode = 400; 
-          res.end('Insufficient wallet balance, please add balance to the wallet');
+    if (req.method === 'PUT' && req.url === '/update_wallet') {
+      let requestBody = '';
+      req.on('data', (data) => {
+        requestBody += data;
+      });
+  
+      req.on('end', () => {
+        const { user_id, amount, action } = JSON.parse(requestBody);
+  
+        if (!user_id || !amount || !action || (action !== 'add' && action !== 'sub')) {
+          res.statusCode = 400; // Bad Request
+          res.end('Invalid parameters');
           return;
         }
-        userWallets[user_id] -= amount; // Subtract from the user's wallet
-      }
-
-      const query = `
-        UPDATE Wallet
-        SET WalletBalance = ?
-        WHERE UserID = ?
-      `;
-
-      connection.query(
-        query,
-        [userWallets[user_id], user_id],
-        (err, result) => {
-          if (err) {
-            console.error('Error updating wallet: ' + err.stack);
-            res.statusCode = 500; 
-            res.end('Internal Server Error');
-            return;
-          }
-
-          if (result.affectedRows === 0) {
-            res.statusCode = 404; 
-            res.end('User wallet not found');
-            return;
-          }
-
-          res.statusCode = 200; 
-          res.end('Updated wallet for user');
-          return;
+  
+        if (!userWallets[user_id]) {
+          userWallets[user_id] = 0; // Initialize the user's wallet if it doesn't exist
         }
-      );
-    });
+  
+        if (action === 'add') {
+          userWallets[user_id] += amount; // Add to the user's wallet
+        } else if (action === 'sub') {
+          if (amount > userWallets[user_id]) {
+            res.statusCode = 400;
+            res.end('Insufficient wallet balance, please add balance to the wallet');
+            return;
+          } else {
+            userWallets[user_id] -= amount; // Subtract from the user's wallet
+          }
+        }
+  
+        const query = `
+          UPDATE Wallet
+          SET WalletBalance = ?
+          WHERE UserID = ?
+        `;
+  
+        connection.query(
+          query,
+          [userWallets[user_id], user_id],
+          (err, result) => {
+            if (err) {
+              console.error('Error updating wallet: ' + err.stack);
+              res.statusCode = 500;
+              res.end('Internal Server Error');
+              return;
+            }
+  
+            if (result.affectedRows === 0) {
+              res.statusCode = 404;
+              res.end('User wallet not found');
+              return;
+            }
+  
+            res.statusCode = 200;
+            res.end('Updated wallet for user');
+            return;
+          }
+        );
+      });
+    }
   }
-}
+  
+  
 
 function viewPurchaseHistory(req, res) {
   if (req.method === 'GET' && req.url.startsWith('/purchase_history')) {
@@ -274,40 +266,8 @@ function viewPurchaseHistory(req, res) {
   }
 }
 
-function getWalletBalance(req, res) {
-  if (req.method === 'GET' && req.url.startsWith('/wallet_balance')) {
-    const queryParameters = new URLSearchParams(req.url.split('?')[1]);
-    const userId = queryParameters.get('id');
-    if (!userId || isNaN(userId)) {
-      res.statusCode = 400;
-      res.end('Invalid User ID');
-      return;
-    }
-    const selectQuery = `
-      SELECT WalletBalance from wallet where UserID = ?
-    `;
 
-    connection.query(selectQuery, [userId], (err, results) => {
-      if (err) {
-        console.error('Error querying the database: ' + err.stack);
-        res.statusCode = 500;
-        res.end('Internal Server Error');
-        return;
-      }
-
-      if (results.length === 0) {
-        res.statusCode = 404; // Not Found
-        res.end(`No wallet balance found for user ${userId}`);
-      } else {
-        const walletBalance = results[0].WalletBalance;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ balance: walletBalance }));
-      }
-    });
-  }
-}
-
-function checkQuantity(bookId, quantity) {
+function checkQuantity(req, res) {
   if (req.method === 'GET' && req.url.startsWith('/check_quantity')) {
     const queryParameters = new URLSearchParams(req.url.split('?')[1]);
     const bookId = queryParameters.get('book_id');
@@ -419,6 +379,48 @@ function addToPurchaseHistory(req, res) {
   }
 }
 
+function updateBookQuantity(req, res) {
+    if (req.method === 'PUT' && req.url === '/update_book_quantity') {
+      let requestBody = '';
+      req.on('data', (data) => {
+        requestBody += data;
+      });
+  
+      req.on('end', () => {
+        const { bookId, quantity } = JSON.parse(requestBody);
+  
+        if (!bookId || !quantity || isNaN(quantity)) {
+          res.statusCode = 400; // Bad Request
+          res.end('Invalid parameters');
+          return;
+        }
+  
+        const updateQuery = `
+          UPDATE BookListing
+          SET Quantity = Quantity - ?
+          WHERE BookID = ? AND Quantity >= ?;
+        `;
+  
+        connection.query(updateQuery, [quantity, bookId, quantity], (err, result) => {
+          if (err) {
+            console.error('Error updating book quantity: ' + err.stack);
+            res.statusCode = 500; // Internal Server Error
+            res.end('Internal Server Error');
+            return;
+          }
+  
+          if (result.affectedRows === 1) {
+            res.statusCode = 200; // OK
+            res.end('Book quantity updated');
+          } else {
+            res.statusCode = 400; // Bad Request
+            res.end('Failed to update book quantity');
+          }
+        });
+      });
+    }
+  }
+
 function performPurchase(UserID, BookID, Quantity, totalPrice) {
   // Empty the user's cart
   const cartUpdateResult = updateCart(BookID, UserID, 'remove');
@@ -446,7 +448,7 @@ function purchaseProduct(req, res) {
         return;
       }
       // Check if the requested quantity is available in the BookListing
-      if (!checkQuantity(req, res, BookID, Quantity)) {
+      if (!checkQuantity(req, res)) {
         return; 
       }
       // Calculate the total price for the products
@@ -481,7 +483,7 @@ const server = http.createServer((req, res) => {
   updateWallet(req, res);
   viewPurchaseHistory(req, res);
   getWalletBalance(req, res);
-  checkQuantity(bookId, quantity);
+  checkQuantity(req, res);
   computePrice(req, res);
   addToPurchaseHistory(req, res);
   purchaseProduct(req, res);
