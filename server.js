@@ -6,7 +6,7 @@ const moment = require('moment');
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'heythere',
+  password: '-',
   database: 'project',
 });
 
@@ -23,8 +23,10 @@ function connectToDatabase() {
 
 //Function to update the products in the cart - called when user wants to add/delete the products in cart or when the user checksout the cart
 function updateCart(book_id, user_id, action) {
+  console.log(`Updating cart for book_id: ${book_id}, user_id: ${user_id}, action: ${action}`);
   return new Promise((resolve, reject) => {
     if (!book_id || !user_id || !action || (action !== 'add' && action !== 'remove')) {
+      console.error('Invalid parameters for updating cart');
       reject({ statusCode: 400, message: 'Invalid parameters' });
       return;
     }
@@ -43,6 +45,7 @@ function updateCart(book_id, user_id, action) {
           return;
         }
 
+        console.log('Product added to the cart');
         resolve({ statusCode: 200, message: 'Product added to the cart' });
       });
     } else if (action === 'remove') {
@@ -65,10 +68,12 @@ function updateCart(book_id, user_id, action) {
         }
 
         if (result.affectedRows === 0) {
+          console.log('Product not in the cart');
           reject({ statusCode: 400, message: 'Product not in the cart' });
           return;
         }
 
+        console.log('Product removed from the cart');
         resolve({ statusCode: 200, message: 'Product removed from the cart' });
 
         connection.query(deleteQuery, [user_id, book_id], (err) => {
@@ -84,8 +89,10 @@ function updateCart(book_id, user_id, action) {
 //Function to update the wallet value of the user - called when the user adds the amount or makes a purchase
 const userWallets = {}
 function updateWallet(user_id, amount, action) {
+  console.log(`Updating wallet for user_id: ${user_id}, amount: ${amount}, action: ${action}`);
   return new Promise((resolve, reject) => {
     if (!user_id || !amount || !action || (action !== 'add' && action !== 'sub')) {
+      console.error('Invalid parameters for updating wallet');
       reject({ statusCode: 400, message: 'Invalid parameters' });
       return;
     }
@@ -93,11 +100,13 @@ function updateWallet(user_id, amount, action) {
     // Fetch the current wallet balance from the database
     connection.query('SELECT WalletBalance FROM Wallet WHERE UserID = ?', [user_id], (err, results) => {
       if (err) {
+        console.error('Error fetching wallet balance: ' + err.stack);
         reject({ statusCode: 500, message: 'Error fetching wallet balance' });
         return;
       }
 
       if (results.length === 0) {
+        console.log('User wallet not found');
         reject({ statusCode: 404, message: 'User wallet not found' });
         return;
       }
@@ -109,6 +118,7 @@ function updateWallet(user_id, amount, action) {
         userWallets[user_id] += amount;
       } else if (action === 'sub') {
         if (amount > userWallets[user_id]) {
+          console.log('Insufficient wallet balance, please add balance to the wallet');
           reject({ statusCode: 400, message: 'Insufficient wallet balance, please add balance to the wallet' });
           return;
         }
@@ -127,10 +137,12 @@ function updateWallet(user_id, amount, action) {
           }
 
           if (result.affectedRows === 0) {
+            console.log('User wallet not found');
             reject({ statusCode: 404, message: 'User wallet not found' });
             return;
           }
 
+          console.log('Wallet updated successfully');
           resolve({ statusCode: 200, message: 'Updated wallet for user' });
         }
       );
@@ -140,8 +152,10 @@ function updateWallet(user_id, amount, action) {
 
 //Function to update the book quantity in the inventory table to reduce the quantity after the user's purchase is successful.  
 function updateBookQuantity(bookId, quantity) {
+  console.log(`Updating book quantity for bookId: ${bookId}, quantity: ${quantity}`);
   return new Promise((resolve, reject) => {
     if (!bookId || !quantity || isNaN(quantity)) {
+      console.error('Invalid parameters for updating book quantity');
       reject({ statusCode: 400, message: 'Invalid parameters' });
       return;
     }
@@ -160,8 +174,10 @@ function updateBookQuantity(bookId, quantity) {
       }
 
       if (result.affectedRows === 1) {
+        console.log('Book quantity updated successfully');
         resolve({ statusCode: 200, message: 'Book quantity updated' });
       } else {
+        console.log('Failed to update book quantity');
         reject({ statusCode: 400, message: 'Failed to update book quantity' });
       }
     });
@@ -201,22 +217,35 @@ function addToPurchaseHistory(UserID, BookID, Quantity, totalPrice) {
 
 //Function is called once the user qualifies certain checks and to make his purchase successful.
 function performPurchase(UserID, BookID, Quantity, totalPrice) {
+  console.log(`Performing purchase for UserID: ${UserID}, BookID: ${BookID}, Quantity: ${Quantity}, totalPrice: ${totalPrice}`);
   return new Promise((resolve, reject) => {
     connection.beginTransaction(err => {
       if (err) {
+        console.error('Error starting transaction: ' + err.stack);
         reject({ statusCode: 500, message: 'Error starting transaction', error: err });
         return;
       }
 
       updateCart(BookID, UserID, 'remove')
-        .then(cartResult => updateWallet(UserID, totalPrice, 'sub'))
-        .then(walletResult => updateBookQuantity(BookID, Quantity))
-        .then(() => addToPurchaseHistory(UserID, BookID, Quantity, totalPrice))
-        .then(() => {
+        .then(cartResult => {
+          console.log('Cart update result:', cartResult);
+          return updateWallet(UserID, totalPrice, 'sub');
+        })
+        .then(walletResult => {
+          console.log('Wallet update result:', walletResult);
+          return updateBookQuantity(BookID, Quantity);
+        })
+        .then(bookQuantityResult => {
+          console.log('Book quantity update result:', bookQuantityResult);
+          return addToPurchaseHistory(UserID, BookID, Quantity, totalPrice);
+        })
+        .then(purchaseHistoryResult => {
+          console.log('Purchase history update result:', purchaseHistoryResult);
           connection.commit(err => {
             if (err) {
               connection.rollback(() => reject({ statusCode: 500, message: 'Error committing transaction', error: err }));
             } else {
+              console.log('Purchase completed successfully');
               resolve({
                 statusCode: 200,
                 message: 'Purchase completed successfully',
@@ -226,7 +255,10 @@ function performPurchase(UserID, BookID, Quantity, totalPrice) {
           });
         })
         .catch(error => {
-          connection.rollback(() => reject({ statusCode: 500, message: 'Error during purchase', error }));
+          connection.rollback(() => {
+            console.error('Error during purchase: ' + error);
+            reject({ statusCode: 500, message: 'Error during purchase', error });
+          });
         });
     });
   });
@@ -235,16 +267,20 @@ function performPurchase(UserID, BookID, Quantity, totalPrice) {
 //Verify if the inventory has sufficient stock that user intends to make a purchase
 function checkQuantity(bookId, quantity) {
   return new Promise((resolve, reject) => {
+    console.log('Checking quantity for BookID:', bookId, 'Quantity:', quantity);
     const selectQuery = 'SELECT * from BookListing where BookID = ? AND Quantity >= ?';
-
     connection.query(selectQuery, [bookId, quantity], (err, results) => {
       if (err) {
         console.error('Error querying the database: ' + err.stack);
         reject({ statusCode: 500, message: 'Internal Server Error' });
         return;
       }
-
-      resolve({ available: results.length > 0 });
+      console.log('Check Quantity results:', results);
+      const available = results.length > 0;
+      resolve({ available });
+      if (!available) {
+        console.log(`Insufficient quantity for BookID ${bookId}`);
+      }
     });
   });
 }
@@ -252,6 +288,8 @@ function checkQuantity(bookId, quantity) {
 //Computes and returns the final purchase value for the products that are being checked out
 function computePrice(bookId, quantity) {
   return new Promise((resolve, reject) => {
+    console.log('Computing price for BookID:', bookId, 'Quantity:', quantity);
+
     const selectQuery = 'SELECT Price, Quantity from BookListing where BookID = ? AND Quantity >= ?';
 
     connection.query(selectQuery, [bookId, quantity], (err, results) => {
@@ -261,10 +299,14 @@ function computePrice(bookId, quantity) {
         return;
       }
 
+      console.log('Compute Price results:', results);
+
       if (results.length > 0) {
         const price = results[0].Price * quantity;
+        console.log('Computed Price:', price);
         resolve({ total_price: price });
       } else {
+        console.log(`Product not found or insufficient quantity for BookID ${bookId}`);
         reject({ statusCode: 404, message: 'Product not found or insufficient quantity' });
       }
     });
@@ -274,8 +316,8 @@ function computePrice(bookId, quantity) {
 //Function to get the user's wallet amount - Used when user intends to make a purchase
 function getWalletBalance(userId) {
   return new Promise((resolve, reject) => {
+    console.log('Fetching wallet balance for UserID:', userId);
     const selectQuery = 'SELECT WalletBalance FROM wallet WHERE UserID = ?';
-
     connection.query(selectQuery, [userId], (err, results) => {
       if (err) {
         console.error('Error querying the database: ' + err.stack);
@@ -283,10 +325,14 @@ function getWalletBalance(userId) {
         return;
       }
 
+      console.log('Wallet balance query results:', results);
+
       if (results[0]) {
         const walletBalance = results[0].WalletBalance;
+        console.log('Wallet balance for UserID', userId, ':', walletBalance);
         resolve({ balance: walletBalance });
       } else {
+        console.log(`No wallet balance found for user ${userId}`);
         reject({ statusCode: 404, message: `No wallet balance found for user ${userId}` });
       }
     });
@@ -296,7 +342,6 @@ function getWalletBalance(userId) {
 //Function called when a http request is initiated to checkout from the cart
 function purchaseProduct(req, res) {
   console.log('Received a purchase request');
-
   let requestBody = '';
 
   req.on('data', (data) => {
@@ -305,6 +350,7 @@ function purchaseProduct(req, res) {
 
   req.on('end', () => {
     let parsedBody;
+
     try {
       parsedBody = JSON.parse(requestBody);
       console.log('Request body parsed:', parsedBody);
@@ -315,28 +361,56 @@ function purchaseProduct(req, res) {
       return;
     }
 
-    const { UserID, BookID, Quantity } = parsedBody;
-    let totalPrice; // Variable to store the totalPrice
+    // Check if the request body is an array
+    if (!Array.isArray(parsedBody)) {
+      res.statusCode = 400;
+      res.end('Invalid JSON format. Expecting an array of products.');
+      return;
+    }
 
-    checkQuantity(BookID, Quantity)
-      .then(() => computePrice(BookID, Quantity))
-      .then((result) => {
-        totalPrice = result.total_price; // Store the totalPrice
-        return getWalletBalance(UserID);
+    let totalPurchaseValue = 0; // Variable to store the total purchase value
+
+    const purchasePromises = parsedBody.map((product) => {
+      const { UserID, BookID, Quantity } = product;
+
+      return checkQuantity(BookID, Quantity)
+        .then(() => computePrice(BookID, Quantity))
+        .then((result) => {
+          totalPurchaseValue += result.total_price; // Accumulate total purchase value
+          return { UserID, BookID, Quantity, totalPrice: result.total_price }; // Include totalPrice in the resolved object
+        });
+    });
+
+    let products; // Define products variable in the outer scope
+
+    Promise.all(purchasePromises)
+      .then((resolvedProducts) => {
+        products = resolvedProducts; // Assign to outer scope variable
+        return getWalletBalance(products[0].UserID, totalPurchaseValue);
       })
       .then((userWalletBalance) => {
-        if (userWalletBalance.balance < totalPrice) {
+        console.log('User wallet balance:', userWalletBalance);
+        if (userWalletBalance.balance < totalPurchaseValue) {
+          console.log('Insufficient wallet balance');
           throw { statusCode: 400, message: 'Insufficient wallet balance' };
         }
-        return performPurchase(UserID, BookID, Quantity, totalPrice); // Pass totalPrice to performPurchase
+
+        // Now proceed with the individual product purchases
+        const productPurchasePromises = products.map((product) => {
+          const { UserID, BookID, Quantity, totalPrice } = product;
+
+          return performPurchase(UserID, BookID, Quantity, totalPrice);
+        });
+
+        return Promise.all(productPurchasePromises);
       })
       .then(() => {
-        console.log('Purchase successful');
+        console.log('All purchases successful');
         res.statusCode = 200;
-        res.end('Purchase successful');
+        res.end('All purchases successful');
       })
       .catch((error) => {
-        console.error('Error during purchase:', error);
+        console.error('Error during purchases:', error);
         res.statusCode = error.statusCode || 500;
         res.end(JSON.stringify({ error: error.message || 'Internal Server Error' }));
       });
