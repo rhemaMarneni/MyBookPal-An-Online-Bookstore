@@ -2,6 +2,9 @@ const http = require('http');
 const mysql = require('mysql2');
 const port = 3000;
 const moment = require('moment');
+const stripe = require('stripe')('sk_test_51OHGwhI1Ek63lRaqSVzjrAYXeY7BqNxhGi2VOooMUQ12vFYPCAzaNBpt2ji4xSSR6IL0Y5gYptiTZSP5BLlcUwIV009r1hXMfX');
+const success = "http://localhost:3000/success.html"
+// const cancel = "https://buy.stripe.com/test_aEU9Bg95L9Ot5c4bIK"
 
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -112,7 +115,7 @@ function updateWallet(user_id, amount, action) {
       }
 
       let currentBalance = results[0].WalletBalance;
-      userWallets[user_id] = currentBalance; // Synchronize with the database
+      userWallets[user_id] = currentBalance; 
 
       if (action === 'add') {
         userWallets[user_id] += amount;
@@ -502,12 +505,155 @@ function viewPurchaseHistory(req, res) {
   }
 }
 
+function createCheckoutSession(userId, amount) {
+  return new Promise((resolve, reject) => {
+    stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: 'Wallet Recharge',
+          },
+          unit_amount: amount * 100, // Stripe expects amount in cents
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `http://localhost:3000/success.html`, // success page
+      cancel_url: 'http://localhost:3000/cancel.html/', // cancel page
+      client_reference_id: userId.toString(), // Add user ID as client reference
+    }, (error, session) => {
+      if (error) {
+        console.error('Error creating Checkout Session:', error);
+        reject(error);
+      } else {
+        resolve(session);
+      }
+    });
+  });
+}
+
+// Assuming userBalances is a global variable or defined in the outer scope
+const userBalances = {};
+function addBalancetoWallet(req, res) {
+  console.log('Received a request to add to the wallet');
+  let requestBody = '';
+
+  req.on('data', (data) => {
+    requestBody += data;
+  });
+
+  req.on('end', () => {
+    let parsedBody;
+
+    try {
+      parsedBody = JSON.parse(requestBody);
+      console.log('Request body parsed:', parsedBody);
+    } catch (error) {
+      console.error('Error parsing request body:', error);
+      res.statusCode = 400;
+      res.end('Invalid JSON format in request body');
+      return;
+    }
+
+    const { user_id, amount } = parsedBody;
+
+    if (!user_id || !amount) {
+      res.statusCode = 400;
+      res.end('Both user_id and amount are required in the request body');
+      return;
+    }
+
+    const userId = parseInt(user_id);
+    if (isNaN(userId)) {
+      res.statusCode = 400;
+      res.end('Invalid user_id');
+      return;
+    }
+
+    userBalances[userId] = (userBalances[userId] || 0) + parseFloat(amount);
+
+    // Use the createCheckoutSession function with promises
+    createCheckoutSession(userId, amount)
+      .then((session) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ checkout_url: session.url }));
+      })
+      .catch((error) => {
+        console.error('Error creating Checkout Session:', error);
+        res.statusCode = 500;
+        res.end('Internal Server Error');
+      });
+  });
+}
+
+function handleSuccess(req, res) {
+  const sessionId = req.query.session_id;
+
+  const updateQuery = `
+    UPDATE Wallet 
+    SET WalletBalance = WalletBalance + ? 
+    WHERE UserID = ?
+  `;
+
+  stripe.checkout.sessions
+    .retrieve(sessionId)
+    .then((session) => {
+      if (session.payment_status === 'paid') {
+        const userId = parseInt(session.client_reference_id);
+        const amount = session.amount_total / 100; 
+
+        if (isNaN(userId)) {
+          console.error('Invalid user ID:', session.client_reference_id);
+          res.status(400).send('Invalid user ID');
+          return;
+        }
+
+        console.log(`Updating wallet balance for user ${userId} with amount ${amount}`);
+
+        new Promise((resolve, reject) => {
+          connection.query(updateQuery, [amount, userId], (err, updateResult) => {
+            if (err) {
+              console.error('Error updating wallet balance:', err);
+              reject(err);
+              return;
+            }
+
+            resolve(updateResult);
+          });
+        })
+        .then((updateResult) => {
+          console.log('Database update result:', updateResult);
+          console.log(`Amount ${amount} added to the wallet for user ${userId}`);
+          // Redirect to the full URL of the success page
+          res.redirect('http://localhost:3000/success.html');
+        })
+        .catch((updateError) => {
+          console.error('Error updating wallet balance:', updateError);
+          res.status(500).send('Internal Server Error');
+        });
+      } else {
+        console.log(`Payment not successful for session ${sessionId}`);
+        res.redirect('http://localhost:3000/cancel.html');
+      }
+    })
+    .catch((error) => {
+      console.error('Error handling successful payment:', error);
+      res.status(500).send('Internal Server Error');
+    });
+}
+
 const server = http.createServer((req, res) => {
   console.log(`Received request: ${req.method} ${req.url}`);
 
   if (req.method === 'GET' && req.url.startsWith('/view_cart')) {
     viewUserCart(req, res);
-  } else if (req.method === 'POST' && req.url.startsWith('/purchase_product')) {
+  } else if (req.method === 'POST' && req.url.startsWith('/add_wallet_amount')) {
+    addBalancetoWallet(req, res);
+  }
+  else if (req.method === 'POST' && req.url.startsWith('/purchase_product')) {
     purchaseProduct(req, res);
   } else if (req.method === 'GET' && req.url.startsWith('/purchase_history')) {
     viewPurchaseHistory(req, res);
