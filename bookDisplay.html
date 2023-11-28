@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyBookPal</title>
+    <link rel="stylesheet" href="listAllBooks.css" />
+    <link rel="stylesheet" href="productStyle.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">MyBookPal</div>
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="#books" class="books-icon">Books</a></li>
+          <li><a href="#ebooks" class="ebooks-icon">eBooks</a></li>
+          <li><a href="#audiobooks" class="audiobooks-icon">Audiobooks</a></li>
+          <li>
+            <a href="#bestsellers" class="bestsellers-icon">Bestsellers</a>
+          </li>
+          <li><a href="#comingsoon" class="comingsoon-icon">Coming Soon</a></li>
+          <li><a href="#giftcards" class="giftcards-icon">Gift Cards</a></li>
+          <li><a href="#membership" class="membership_icon">Memberships</a></li>
+        </ul>
+      </nav>
+      <ul class="user-menu">
+        <li><a href="#account" class="account-icon">My Account</a></li>
+        <li><a href="#wishlist" class="wishlist-icon">Wishlist</a></li>
+        <li><a href="#cart" class="cart-icon">Cart</a></li>
+      </ul>
+    </header>
+    <div class="search-bar">
+      <input type="text" placeholder="Search for books" />
+      <button type="submit">Search</button>
+      <div class="order-filter">
+        <label for="orderBy">Sort By:</label>
+        <select id="orderBy">
+          <option value="lowToHigh">Low to High</option>
+          <option value="highToLow">High to Low</option>
+        </select>
+
+        <label for="priceFilter">Price:</label>
+        <select id="priceFilter">
+          <option value="greaterThan50">Greater than 50</option>
+          <option value="lessThan50">Less than 50</option>
+          <option value="greaterThan10">Greater than 10</option>
+          <option value="lessThan10">Less than 10</option>
+        </select>
+      </div>
+    </div>
+    <div class="book-container">
+      <div class="product-container" id="bookDetailsContainer">
+        <img
+          src="https://img.kitapyurdu.com/v1/getImage/fn:11343251/wi:100/wh:true"
+          alt="Book Image"
+          id="pic"
+        />
+        <div class="details">
+          <p class="title">Book Title</p>
+          <p class="author">by <strong>Author</strong></p>
+          <h3 class="price">12.99</h3>
+          <button class="condition">Condition</button>
+          <p class="genre text"><strong>Genre:&nbsp;</strong></p>
+          <p class="desc text"><strong>Description:&nbsp;</strong></p>
+          <p class="quantity text"><strong>Available Copies:&nbsp;</strong></p>
+          <button class="buy-bid">Purchase</button>
+        </div>
+      </div>
+    </div>
+    <script src="bookdetails.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        displayBookDetails(); //display on page load
+      });
+
+      async function displayBookDetails() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookId = urlParams.get("id");
+
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8081/book?id=${bookId}`
+          );
+
+          if (!response.ok) { //response 200
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          const data = await response.json();
+
+          console.log(data);
+
+          // Check if the data is an array and has at least one item
+          if (Array.isArray(data) && data.length > 0) {
+            const bookDetails = data[0]; // Access the first item in the array
+
+            const bookDetailsContainer = document.getElementById(
+              "bookDetailsContainer"
+            );
+            const picElement = document.getElementById("pic");
+            // Set the src attribute with the image URL from the data
+            picElement.src = bookDetails.Photos;
+            picElement.alt = `Book Image: ${bookDetails.Title}`;
+
+            const titleElement = bookDetailsContainer.querySelector(".title");
+            const authorElement = bookDetailsContainer.querySelector(".author");
+            const priceElement = bookDetailsContainer.querySelector(".price");
+            const conditionElement =
+              bookDetailsContainer.querySelector(".condition");
+            const genreElement = bookDetailsContainer.querySelector(".genre");
+            const descElement = bookDetailsContainer.querySelector(".desc");
+            const quantityElement =
+              bookDetailsContainer.querySelector(".quantity");
+
+            picElement.innerHTML = bookDetails.Photos;
+            titleElement.textContent = bookDetails.Title;
+            authorElement.innerHTML = `<em>by</em> ${bookDetails.Author}`;
+            priceElement.innerHTML = `$${bookDetails.Price}`;
+
+            genreElement.innerHTML = `<strong>Genre:</strong> ${bookDetails.Genre}`;
+            descElement.innerHTML = `<strong>Description:</strong> ${bookDetails.Book_description}`;
+            quantityElement.innerHTML = `<strong>Available Copies:</strong> ${bookDetails.Quantity}`;
+
+            if(bookDetails.Auction){  //TODO: check if auction ended
+                const buyButton = bookDetailsContainer.querySelector(".buy-bid")
+                buyButton.textContent = "Bid"
+                priceElement.innerHTML = `An auction is currently live for this book`;
+                priceElement.style.color = "rgb(0, 100, 0)";
+                priceElement.style.fontSize = "25px";
+            }
+
+            if (bookDetails.Book_condition === "New") {
+              conditionElement.textContent = "New";
+              conditionElement.classList.add("new");
+            } else if (bookDetails.Book_condition === "Excellent") {
+              conditionElement.textContent = "Excellent";
+              conditionElement.classList.add("new");
+            }
+            else if (bookDetails.Book_condition === "Like New") {
+              conditionElement.textContent = "Like New";
+              conditionElement.classList.add("like-new");
+            } else if (bookDetails.Book_condition === "Used") {
+              conditionElement.textContent = "Used";
+              conditionElement.classList.add("used");
+            } else if (bookDetails.Book_condition === "Good") {
+              conditionElement.textContent = "Good";
+              conditionElement.classList.add("good");
+            } else {
+              conditionElement.textContent = "Condition";
+            }
+          } else {
+            throw new Error("Invalid data format received from the server");
+          }
+        } catch (error) {
+          console.error("Error fetching book details:", error.message);
+          alert("Error fetching book details. Please try again.");
+        }
+      }
+    </script>
+  </body>
+</html>

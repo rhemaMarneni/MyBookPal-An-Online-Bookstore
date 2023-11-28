@@ -1,0 +1,99 @@
+
+
+.book-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+    width: auto;
+    background-color: rgb(227, 227, 227);
+}
+
+.product-container{
+    background-color: rgb(203, 203, 203);
+    display: grid;
+    height: 35em;
+    width: 80em;
+    grid-template-columns: 1fr 2fr;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
+	border-radius: 4px;
+    position: relative;
+}
+
+.details{
+    background: #fff;
+    padding: 20px;
+}
+
+.pic{
+    height: auto;
+    width: 100%;
+    object-fit:cover;
+}
+
+.title{
+    font-family: GT Super Bold, serif;
+    font-size: 52px;
+    letter-spacing: 0.4px;
+    line-height: 1.2;
+}
+
+.price{
+    font-family: Verdana, sans-serif;
+    font-size: 32px;
+}
+
+.condition{
+  border-radius: 5px;
+  padding: 8px 18px;
+  font-size: 15px;
+  color: #fff;
+  text-decoration: none;
+  margin: 0px;
+  position: relative;
+  display: inline-block;
+  border: none;
+  box-shadow: 0px 2px 6px 0px #dcdcdc;
+}
+
+.new {
+    background-color: #f1c40f;
+}
+
+.like-new{
+    background-color: #e67e22;
+}
+
+.good{
+    background-color: #e65622;
+}
+
+.used{
+    background-color: #a02b00;
+}
+
+.text{
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
+}
+
+.buy-bid{
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin: 30px;
+    border: none;
+    border-radius: 5px;
+    padding: 15px 25px;
+    font-size: 19px;
+    color: #fff;
+    font-weight: bold;
+    background-color: rgb(3, 108, 213);
+    cursor: pointer;
+    box-shadow:inset 2px 2px 2px 0px rgba(255,255,255,.5),
+   7px 7px 20px 0px rgba(0,0,0,.1),
+   4px 4px 5px 0px rgba(0,0,0,.1);
+}
+
+.buy-bid:hover{
+    background-color: rgb(48, 141, 233);
+}
