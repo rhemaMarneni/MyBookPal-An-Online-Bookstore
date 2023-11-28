@@ -645,6 +645,7 @@ function viewUserCart(req, res) {
     });
 }
 
+//Function to add the products to the cart
 function addToCart(req, res) {
   let requestBody = '';
 
@@ -719,6 +720,74 @@ function addToCart(req, res) {
     }
   });
 }
+// Function to delete all products from the cart for a user
+function deleteFromCart(req, res) {
+  const queryParameters = new URLSearchParams(req.url.split('?')[1]);
+  const userId = queryParameters.get('id');
+  if (!userId || isNaN(userId)) {
+    res.statusCode = 400; // Bad Request
+    res.end('Invalid User ID');
+    return;
+  }
+
+  const checkQuery = `
+    SELECT COUNT(*) AS count
+    FROM Cart
+    WHERE UserID = ?
+  `;
+
+  const deleteQuery = `
+    DELETE FROM Cart
+    WHERE UserID = ?
+  `;
+
+  new Promise((resolve, reject) => {
+    // First, check if any records exist
+    connection.query(checkQuery, [userId], (error, results) => {
+      if (error) {
+        console.error('Error querying the cart:', error);
+        reject(error);
+        return;
+      }
+
+      // Check the count of records
+      if (results[0].count > 0) {
+        // Proceed with deletion
+        connection.query(deleteQuery, [userId], (error, result) => {
+          if (error) {
+            console.error('Error deleting products from the cart:', error);
+            reject(error);
+            return;
+          }
+
+          console.log(`Deleted all products from the cart for user ${userId}`);
+          resolve(result);
+        });
+      } else {
+        // No records to delete
+        resolve({ message: 'No products found for the user. Nothing to delete.' });
+      }
+    });
+  })
+  .then((result) => {
+    if (result.message) {
+      // No records found case
+      res.statusCode = 404;
+      res.writeHead(res.statusCode, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: result.message }));
+    } else {
+      // Records deleted successfully
+      res.statusCode = 200;
+      res.writeHead(res.statusCode, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: 'Products deleted successfully' }));
+    }
+  })
+  .catch((error) => {
+    res.statusCode = 500;
+    res.writeHead(res.statusCode, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: 'Internal Server Error' }));
+  });
+}
 
 
 const server = http.createServer((req, res) => {
@@ -737,6 +806,9 @@ const server = http.createServer((req, res) => {
   } 
   else if (req.method === 'GET' && req.url.startsWith('/purchase_history')) {
     viewPurchaseHistory(req, res);
+  } 
+  else if (req.method === 'DELETE' && req.url.startsWith('/delete_from_cart')) {
+    deleteFromCart(req, res);
   } 
   else {
     console.log('Invalid request endpoint or method');
