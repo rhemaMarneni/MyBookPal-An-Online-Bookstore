@@ -121,3 +121,11 @@ VALUES
   (3, true),
   (4, false),
   (5, true);
+
+CREATE TABLE QUERIES(
+query_id int auto_increment,
+UserId int,
+question varchar(255),
+PRIMARY KEY (query_id),
+FOREIGN KEY (userID) references customer(UserID)
+);
