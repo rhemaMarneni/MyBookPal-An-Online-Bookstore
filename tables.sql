@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS Auction (
     	 ReservePrice DECIMAL(10, 2),
 	 MinimumIncrement INT,
 	 CurrentBid INT,
-	AuctionStatus VARCHAR(10),
+	AuctionStatus Auction TINYINT(1) DEFAULT 1,
 	BuyerID INT,
     	FOREIGN KEY (BookID) REFERENCES BookListing(BookID)
 );
