@@ -47,12 +47,14 @@ CREATE TABLE IF NOT EXISTS PurchaseHistory (
 
 CREATE TABLE IF NOT EXISTS Auction (
    	 BookID INT PRIMARY KEY,
+	 SellerID INT DEFAULT 1,
    	 StartDateTime DATETIME,
    	 EndDateTime DATETIME,
     	 ReservePrice DECIMAL(10, 2),
 	 MinimumIncrement INT,
 	 CurrentBid INT,
 	AuctionStatus VARCHAR(10),
+	BuyerID INT,
     	FOREIGN KEY (BookID) REFERENCES BookListing(BookID)
 );
 
