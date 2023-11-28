@@ -12,7 +12,7 @@ class WebServer {
       host: "127.0.0.1",
       user: "root",
       password: "password",
-      database: "book_catalog",
+      database: "project",
     });
     this.dbCon.connect((err) => {
       if (err) {
@@ -23,50 +23,112 @@ class WebServer {
       this.startServer(() => {
         console.log("Server started");
       });
-     
     });
     setInterval(() => {
       this.checkExpiredAuctions();
-    }, 10 * 1000); 
-    
-    
+    }, 10 * 1000);
   }
-  
 
   async checkExpiredAuctions() {
+    const nodemailer = require("nodemailer");
+
+    // Create a nodemailer transporter using your email service credentials
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // e.g., 'gmail'
+      auth: {
+        user: "bhargavichinthapatla99@gmail.com",
+        pass: "wjjm iurq vemq rvrw",
+      },
+    });
+
+    // Function to send email
+    function sendEmail(to, subject, text) {
+      const mailOptions = {
+        from: "bhargavichinthapatla99@gmail.com", // Sender's email address
+        to, // Receiver's email address
+        subject, // Subject of the email
+        text, // Email body in plain text
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error sending email:", error);
+        } else {
+          console.log("Email sent: " + info.response);
+        }
+      });
+    }
+
+    // Example of using the function to send an email
+
+    // Iterate through expired auctions and send emails
+
+    //////////////////////////////////////////////
+    const expiredAuctionsInfo = []; // Array to store information for expired auctions
+
     const currentTime = new Date();
     const expiredAuctions = await this.getExpiredAuctions(currentTime);
-  
+
     expiredAuctions.forEach(async (auction) => {
       // Check if the book has already been notified
       if (!notifiedBooks.has(auction.bookid)) {
+        // Print seller email and book ID to the console
+        console.log(
+          `Seller Email: ${auction.email}, Book ID: ${auction.bookid}`
+        );
+
+        // Save information for the expired auction in the array
+        expiredAuctionsInfo.push({
+          bookid: auction.bookid,
+          sellerid: auction.sellerid,
+          email: auction.email,
+          status:
+            auction.currentbid >= auction.reserveprice
+              ? "Successful"
+              : "Not Successful",
+        });
+
         if (auction.currentbid >= auction.reserveprice) {
           // Auction was successful
-          console.log(`Auction for book  (bookid: ${auction.bookid}) has successfully ended.`);
+          console.log(
+            `Auction for book (bookid: ${auction.bookid}) has successfully ended.`
+          );
         } else {
           // Auction did not meet the reserve price
-          console.log(`Auction for book  (bookid: ${auction.bookid}) did not meet the reserve price and the auction has ended you can relist the book.`);
-          
+          console.log(
+            `Auction for book (bookid: ${auction.bookid}) did not meet the reserve price, and the auction has ended. You can relist the book.`
+          );
+
           // Notify the user that the book is not sold
           // await this.notifyAuctionFailure(auction);
         }
-  
+
         // Add the book to the list of notified books
         notifiedBooks.add(auction.bookid);
-  
+
         // Update the auction status to indicate that it has ended
         // await this.updateAuctionStatus(auction.auctionid);
       }
     });
+    console.log("Expired Auctions Information:", expiredAuctionsInfo);
+    for (const auction of expiredAuctionsInfo) {
+      const subject = "Auction Completed";
+      const text = `Dear seller, your auction for book ${auction.bookid} has completed. 
+        Details: Reserve Price: ${auction.reserveprice}, Current Bid: ${auction.currentbid}`;
+
+      sendEmail(auction.email, subject, text);
+    }
   }
-  
   //notification
   async getExpiredAuctions(currentTime) {
     return new Promise((resolve, reject) => {
       this.dbCon.query(
-        "SELECT auctionid, bookid, sellerid, reserveprice, currentbid, auctionstatus " +
-        "FROM book_catalog.auctions " +
-        "WHERE enddatetime <= ? AND auctionstatus = 1",
+        "SELECT a.bookid, a.reserveprice, a.currentbid, a.auctionstatus, " +
+          "b.sellerid, u.email " +
+          "FROM project.auction a " +
+          "JOIN project.booklisting b ON a.bookid = b.bookid " +
+          "JOIN project.customer u ON b.sellerid = u.userid " +
+          "WHERE a.enddatetime <= ? AND a.auctionstatus = 1",
         [currentTime],
         (err, results) => {
           if (err) {
@@ -191,7 +253,23 @@ class WebServer {
             res.setHeader("Content-Type", "application/json");
             res.end(
               JSON.stringify({
-                message: "Auction End Data cannot be earlier than Start Date",
+                message: "Auction End Date cannot be earlier than Start Date",
+              })
+            );
+            return;
+          }
+
+          const startdate = new Date(startdatetime);
+          const currentDate = new Date();
+
+          if (startdate < currentDate) {
+            //startdate always in future
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.end(
+              JSON.stringify({
+                message:
+                  "Auction Start Date cannot be earlier than Current Date",
               })
             );
             return;
@@ -200,7 +278,7 @@ class WebServer {
         let bookID;
         //insert book listing
         this.dbCon.query(
-          "INSERT INTO book_catalog.booklisting (sellerid, title, author, book_condition, price, genre, book_description, quantity, auction, photos) VALUES ( ?, ?,?, ?, ?, ?, ?, ?, ? ,?)",
+          "INSERT INTO project.booklisting (sellerid, title, author, book_condition, price, genre, book_description, quantity, auction, photos) VALUES ( ?, ?,?, ?, ?, ?, ?, ?, ? ,?)",
           [
             sellerid,
             title,
@@ -220,8 +298,7 @@ class WebServer {
               //res.setHeader("Content-Type", "application/json");
               res.end(
                 JSON.stringify({
-                  message:
-                    "Could not fulfill book listing. Try checking if you are listing the same book twice.",
+                  message: "Could not fulfill insert request -- book listing",
                 })
               );
               return;
@@ -231,7 +308,7 @@ class WebServer {
             //insert auction -- status by default is true (is live)
             if (auction === 1) {
               this.dbCon.query(
-                "INSERT INTO book_catalog.auctions (bookid, sellerid, startdatetime, enddatetime, reserveprice, minimumincrement) VALUES (?,?,?,?,?,?)",
+                "INSERT INTO project.Auction (bookid, sellerid, startdatetime, enddatetime, reserveprice, minimumincrement, auctionstatus) VALUES (?,?,?,?,?,?,?)",
                 [
                   bookID,
                   sellerid,
@@ -239,6 +316,7 @@ class WebServer {
                   enddatetime,
                   reserveprice,
                   minimumincrement,
+                  1,
                 ],
                 (err) => {
                   if (err) {
@@ -248,7 +326,7 @@ class WebServer {
                     res.end(
                       JSON.stringify({
                         message:
-                          "Internal Server Error. Could not fulfill request -- auction listing",
+                          "Could not fulfill insert request -- book auction",
                       })
                     );
                     return;
@@ -265,12 +343,14 @@ class WebServer {
       }
 
       //VIEW LISTINGS==============================================================================================================
-      else if (req.method === "GET" &&pathname.startsWith("/book/listing")) {
+      else if (req.method === "GET" && pathname.startsWith("/book/listing")) {
         const sellerid = params.id;
         if (!sellerid) {
           res.statusCode = 400;
           res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ message: "Seller ID is missing." }));
+          res.end(
+            JSON.stringify({ message: "Please login to view your listings" })
+          );
           return;
         }
 
@@ -304,13 +384,15 @@ class WebServer {
       }
 
       //EDIT LISTING==============================================================================================================
-      else if (req.method === "PUT" && pathname.startsWith("/book/editlisting")) {
+      else if (
+        req.method === "PUT" &&
+        pathname.startsWith("/book/editlisting")
+      ) {
         // Parse the request body as JSON
         body = JSON.parse(body);
         // Extract bookid and sellerid from the request body
         const bookid = params.bookid;
         const sellerid = params.sellerid;
-
 
         if (!bookid || !sellerid) {
           res.statusCode = 400;
@@ -326,7 +408,7 @@ class WebServer {
 
         // Check if the book listing with the specified bookid and sellerid exists
         this.dbCon.query(
-          "SELECT * FROM book_catalog.booklisting WHERE bookid = ? AND sellerid = ?",
+          "SELECT * FROM project.booklisting WHERE bookid = ? AND sellerid = ?",
           [bookid, sellerid],
           (err, results) => {
             if (err) {
@@ -342,7 +424,7 @@ class WebServer {
               res.end(
                 JSON.stringify({
                   message:
-                    "Book listing not found for the specified bookid and sellerid.",
+                    "Login to edit a booklisting"
                 })
               );
               return;
@@ -350,7 +432,7 @@ class WebServer {
 
             // Update the booklisting table based on bookid and sellerid
             this.dbCon.query(
-              "UPDATE book_catalog.booklisting SET title = ?, author = ?, book_condition = ?, price = ?, genre = ?, book_description = ?, quantity = ?, auction = ?, photos = ? WHERE bookid = ? AND sellerid = ?",
+              "UPDATE project.booklisting SET title = ?, author = ?, book_condition = ?, price = ?, genre = ?, book_description = ?, quantity = ?, auction = ?, photos = ? WHERE bookid = ? AND sellerid = ?",
               [
                 body.title,
                 body.author,
@@ -380,7 +462,7 @@ class WebServer {
                 // Check if an auction record needs to be updated
                 if (body.auction === 1) {
                   this.dbCon.query(
-                    "UPDATE book_catalog.auctions SET startdatetime = ?, enddatetime = ?, reserveprice = ?, minimumincrement = ? WHERE bookid = ? AND sellerid = ?",
+                    "UPDATE project.Auction SET startdatetime = ?, enddatetime = ?, reserveprice = ?, minimumincrement = ? WHERE bookid = ? AND sellerid = ?",
                     [
                       body.startdatetime,
                       body.enddatetime,
@@ -429,46 +511,54 @@ class WebServer {
       //VIEW AUCTION HISTORY====================================================================================================
       else if (req.method === "GET" && pathname.startsWith("/auctionhistory")) {
         const sellerid = params.sellerid;
-    
+
         if (!sellerid) {
-            res.statusCode = 400;
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ message: "Seller ID is missing in the URL parameters." }));
-            return;
+          res.statusCode = 400;
+          res.setHeader("Content-Type", "application/json");
+          res.end(
+            JSON.stringify({
+              message: "Please Login to view your auction history",
+            })
+          );
+          return;
         }
-    
+
         // Query the database to retrieve auction history for the specified seller
         this.dbCon.query(
-            "SELECT * FROM book_catalog.auctions WHERE sellerid = ?",
-            [sellerid],
-            (err, results) => {
-                if (err) {
-                    res.statusCode = 500;
-                    res.setHeader("Content-Type", "application/json");
-                    res.end(JSON.stringify({ message: "Internal Server Error." }));
-                    return;
-                }
-    
-                if (results.length === 0) {
-                    res.statusCode = 404;
-                    res.setHeader("Content-Type", "application/json");
-                    res.end(JSON.stringify({ message: "No auction history found for the specified seller." }));
-                    return;
-                }
-    
-                // Return the auction history as JSON
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify(results));
+          "SELECT * FROM project.Auction WHERE sellerid = ?",
+          [sellerid],
+          (err, results) => {
+            if (err) {
+              res.statusCode = 500;
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ message: "Internal Server Error." }));
+              return;
             }
+
+            if (results.length === 0) {
+              res.statusCode = 404;
+              res.setHeader("Content-Type", "application/json");
+              res.end(
+                JSON.stringify({
+                  message: "No auction history found for the specified seller.",
+                })
+              );
+              return;
+            }
+
+            // Return the auction history as JSON
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(results));
+          }
         );
-    }
+      }
 
       //FILTER AUCTIONS====================================================================================================
       else if (req.method === "GET" && pathname === "/book/filterauctions") {
         let sellerid = params.sellerid;
         let query =
-          "SELECT * FROM book_catalog.booklisting b join book_catalog.auctions a on b.sellerid = a.sellerid  WHERE b.auction = 1 AND ";
+          "SELECT * FROM project.booklisting b join project.Auction a on b.sellerid = a.sellerid  WHERE b.auction = 1 AND ";
         const conditions = [];
 
         for (const key in params) {
@@ -482,10 +572,11 @@ class WebServer {
         query += " AND a.sellerid = " + sellerid;
         this.dbCon.query(query, (err, results) => {
           if (err) {
+            console.log(query);
             res.statusCode = 500;
             res.end(
               JSON.stringify({
-                message: "Internal Server Error - Invalid query",
+                message: "Invalid query - auction filter",
               })
             );
             return;
@@ -505,7 +596,7 @@ class WebServer {
 
       //FILTER LISTINGS====================================================================================================
       else if (req.method === "GET" && pathname === "/book/filterlistings") {
-        let query = "SELECT * FROM book_catalog.booklisting WHERE ";
+        let query = "SELECT * FROM project.booklisting WHERE ";
         const conditions = [];
         let sellerid = params.sellerid;
 
@@ -524,7 +615,7 @@ class WebServer {
             res.statusCode = 500;
             res.end(
               JSON.stringify({
-                message: "Internal Server Error - Invalid query",
+                message: "Invalid query for filter listings",
               })
             );
             return;
@@ -543,10 +634,13 @@ class WebServer {
       }
 
       //EDIT AUCTION====================================================================================================
-      else if (req.method === "PUT" && pathname.startsWith("/book/editauction")) {
+      else if (
+        req.method === "PUT" &&
+        pathname.startsWith("/book/editauction")
+      ) {
         body = JSON.parse(body);
 
-       //const auctionid = params.auctionid;
+        //const auctionid = params.auctionid;
         const bookid = params.bookid;
         const sellerid = params.sellerid;
 
@@ -556,7 +650,7 @@ class WebServer {
           res.end(
             JSON.stringify({
               message:
-                "Book ID and Seller ID are required in the request body.",
+                "Login to edit a listing",
             })
           );
           return;
@@ -564,14 +658,14 @@ class WebServer {
 
         // Check if the book listing with the specified bookid and sellerid exists
         this.dbCon.query(
-          "SELECT * FROM book_catalog.auctions WHERE bookid = ? AND sellerid = ?",
+          "SELECT * FROM project.Auction WHERE bookid = ? AND sellerid = ?",
           [bookid, sellerid],
           (err, results) => {
             if (err) {
-              console.log(err)
+              console.log(err);
               res.statusCode = 500;
               res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify({ message: "Internal Server Error." }));
+              res.end(JSON.stringify({ message: "Query Error - Edit auction" }));
               return;
             }
 
@@ -588,7 +682,7 @@ class WebServer {
             }
 
             this.dbCon.query(
-              "UPDATE book_catalog.auctions SET startdatetime = ?, enddatetime = ?, reserveprice = ?, minimumincrement = ? WHERE bookid = ? AND sellerid = ?",
+              "UPDATE project.Auction SET startdatetime = ?, enddatetime = ?, reserveprice = ?, minimumincrement = ? WHERE bookid = ? AND sellerid = ?",
               [
                 body.startdatetime,
                 body.enddatetime,
@@ -621,7 +715,10 @@ class WebServer {
       }
 
       //DELETE LISTING===========================================================================================
-      else if (req.method === "DELETE" && pathname.startsWith("/book/deletelisting")) {
+      else if (
+        req.method === "DELETE" &&
+        pathname.startsWith("/book/deletelisting")
+      ) {
         const bookid = params.bookid;
         const sellerid = params.sellerid;
         console.log(bookid, sellerid);
@@ -635,7 +732,7 @@ class WebServer {
 
         // First, delete the associated rows from the auctions table based on both bookid and sellerid
         this.dbCon.query(
-          "DELETE FROM book_catalog.auctions WHERE bookid = ? AND sellerid = ?",
+          "DELETE FROM project.Auction bookid = ? AND sellerid = ?",
           [bookid, sellerid],
           (err) => {
             if (err) {
@@ -643,7 +740,7 @@ class WebServer {
               res.setHeader("Content-Type", "application/json");
               res.end(
                 JSON.stringify({
-                  message: "Internal Server Error (Auctions deletion).",
+                  message: "Query Error (Auctions deletion).",
                 })
               );
               return;
@@ -651,7 +748,7 @@ class WebServer {
 
             // Now, delete the row from the booklisting table based on bookid
             this.dbCon.query(
-              "DELETE FROM book_catalog.booklisting WHERE bookid = ? AND sellerid = ?",
+              "DELETE FROM project.booklisting WHERE bookid = ? AND sellerid = ?",
               [bookid, sellerid],
               (err) => {
                 if (err) {
@@ -681,7 +778,10 @@ class WebServer {
       }
 
       //DELETE AUCTION ============================================================================================================
-      else if (req.method === "DELETE" && pathname.startsWith("/book/deleteauction")) {
+      else if (
+        req.method === "DELETE" &&
+        pathname.startsWith("/book/deleteauction")
+      ) {
         const bookid = params.bookid;
         const sellerid = params.sellerid;
 
@@ -691,7 +791,7 @@ class WebServer {
           res.end(
             JSON.stringify({
               message:
-                "Book ID and Seller ID are required in the URL parameters.",
+                "Login to delete an auction",
             })
           );
           return;
@@ -699,7 +799,7 @@ class WebServer {
 
         // First, delete the associated rows from the auctions table based on both bookid and sellerid
         this.dbCon.query(
-          "DELETE FROM book_catalog.auctions WHERE bookid = ? AND sellerid = ?",
+          "DELETE FROM project.Auction bookid = ? AND sellerid = ?",
           [bookid, sellerid],
           (err) => {
             if (err) {
@@ -707,7 +807,7 @@ class WebServer {
               res.setHeader("Content-Type", "application/json");
               res.end(
                 JSON.stringify({
-                  message: "Internal Server Error (Auctions deletion).",
+                  message: "Database query Error (Auctions deletion).",
                 })
               );
               return;
@@ -715,7 +815,7 @@ class WebServer {
 
             // Next, update the auction status in the booklisting table to 0 (indicating no auction)
             this.dbCon.query(
-              "UPDATE book_catalog.booklisting SET auction = 0 WHERE bookid = ? AND sellerid = ?",
+              "UPDATE project.booklisting SET auction = 0 WHERE bookid = ? AND sellerid = ?",
               [bookid, sellerid],
               (err) => {
                 if (err) {
@@ -723,7 +823,7 @@ class WebServer {
                   res.setHeader("Content-Type", "application/json");
                   res.end(
                     JSON.stringify({
-                      message: "Internal Server Error (Auction status update).",
+                      message: "Query Error (Auction status update).",
                     })
                   );
                   return;
@@ -754,7 +854,7 @@ class WebServer {
           res.end(
             JSON.stringify({
               message:
-                "Book ID and Seller ID are required in the URL parameters.",
+                "Login to relsit the listing",
             })
           );
           return;
@@ -782,7 +882,7 @@ class WebServer {
 
         // Update the booklisting table
         this.dbCon.query(
-          "UPDATE book_catalog.booklisting SET title = ?, author = ?, book_condition = ?, price = ?, genre = ?, book_description = ?, quantity = ?, auction = ?, photos = ? WHERE bookid = ? AND sellerid = ?",
+          "UPDATE project.booklisting SET title = ?, author = ?, book_condition = ?, price = ?, genre = ?, book_description = ?, quantity = ?, auction = ?, photos = ? WHERE bookid = ? AND sellerid = ?",
           [
             title,
             author,
@@ -811,7 +911,7 @@ class WebServer {
             // Check if an auction record needs to be updated
             if (auction === 1) {
               this.dbCon.query(
-                "UPDATE book_catalog.auctions SET startdatetime = ?, enddatetime = ?, reserveprice = ?, minimumincrement = ? WHERE bookid = ? AND sellerid = ?",
+                "UPDATE project.Auction SET startdatetime = ?, enddatetime = ?, reserveprice = ?, minimumincrement = ? WHERE bookid = ? AND sellerid = ?",
                 [
                   startdatetime,
                   enddatetime,
@@ -852,8 +952,7 @@ class WebServer {
             }
           }
         );
-      } 
-      else {
+      } else {
         //malformed URLs
         console.log(req.url);
         res.statusCode = 400;
