@@ -9,7 +9,7 @@ const success = "http://localhost:3000/success.html"
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: '-',
+  password: 'heythere',
   database: 'project',
 });
 
@@ -342,6 +342,35 @@ function getWalletBalance(userId) {
   });
 }
 
+function createCheckoutSession(userId, amount) {
+  return new Promise((resolve, reject) => {
+    stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: 'Wallet Recharge',
+          },
+          unit_amount: amount * 100, // Stripe expects amount in cents
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `http://localhost:3000/success.html`, // success page
+      cancel_url: 'http://localhost:3000/cancel.html/', // cancel page
+      client_reference_id: userId.toString(), // Add user ID as client reference
+    }, (error, session) => {
+      if (error) {
+        console.error('Error creating Checkout Session:', error);
+        reject(error);
+      } else {
+        resolve(session);
+      }
+    });
+  });
+}
+
 //Function called when a http request is initiated to checkout from the cart
 function purchaseProduct(req, res) {
   console.log('Received a purchase request');
@@ -420,50 +449,6 @@ function purchaseProduct(req, res) {
   });
 }
 
-// Function to view a user's cart
-function viewUserCart(req, res) {
-  const queryParameters = new URLSearchParams(req.url.split('?')[1]);
-  const userId = queryParameters.get('id');
-
-  if (!userId || isNaN(userId)) {
-    res.statusCode = 400; // Bad Request
-    res.end('Invalid User ID');
-    return;
-  }
-
-  const selectQuery = `
-    SELECT C.*, BL.Title, BL.Price
-    FROM Cart C
-    JOIN BookListing BL ON C.BookID = BL.BookID
-    WHERE C.UserID = ?
-  `;
-
-  new Promise((resolve, reject) => {
-    connection.query(selectQuery, [userId], (err, results) => {
-      if (err) {
-        console.error('Error querying the database: ' + err.stack);
-        reject(err);
-        return;
-      }
-
-      resolve(results);
-    });
-  })
-    .then((results) => {
-      if (results.length === 0) {
-        res.statusCode = 404; // Not Found
-        res.end(`Cart is empty for user_id ${userId}`);
-      } else {
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(results));
-      }
-    })
-    .catch((error) => {
-      res.statusCode = 500;
-      res.end('Internal Server Error');
-    });
-}
-
 // Function called when the user wants to check his past purchase history
 function viewPurchaseHistory(req, res) {
   if (req.method === 'GET' && req.url.startsWith('/purchase_history')) {
@@ -503,35 +488,6 @@ function viewPurchaseHistory(req, res) {
         res.end('Internal Server Error');
       });
   }
-}
-
-function createCheckoutSession(userId, amount) {
-  return new Promise((resolve, reject) => {
-    stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: 'Wallet Recharge',
-          },
-          unit_amount: amount * 100, // Stripe expects amount in cents
-        },
-        quantity: 1,
-      }],
-      mode: 'payment',
-      success_url: `http://localhost:3000/success.html`, // success page
-      cancel_url: 'http://localhost:3000/cancel.html/', // cancel page
-      client_reference_id: userId.toString(), // Add user ID as client reference
-    }, (error, session) => {
-      if (error) {
-        console.error('Error creating Checkout Session:', error);
-        reject(error);
-      } else {
-        resolve(session);
-      }
-    });
-  });
 }
 
 // Assuming userBalances is a global variable or defined in the outer scope
@@ -645,6 +601,126 @@ function handleSuccess(req, res) {
     });
 }
 
+// Function to view a user's cart
+function viewUserCart(req, res) {
+  const queryParameters = new URLSearchParams(req.url.split('?')[1]);
+  const userId = queryParameters.get('id');
+
+  if (!userId || isNaN(userId)) {
+    res.statusCode = 400; // Bad Request
+    res.end('Invalid User ID');
+    return;
+  }
+
+  const selectQuery = `
+    SELECT C.*, BL.Title, BL.Price
+    FROM Cart C
+    JOIN BookListing BL ON C.BookID = BL.BookID
+    WHERE C.UserID = ?
+  `;
+
+  new Promise((resolve, reject) => {
+    connection.query(selectQuery, [userId], (err, results) => {
+      if (err) {
+        console.error('Error querying the database: ' + err.stack);
+        reject(err);
+        return;
+      }
+
+      resolve(results);
+    });
+  })
+    .then((results) => {
+      if (results.length === 0) {
+        res.statusCode = 404; // Not Found
+        res.end(`Cart is empty for user_id ${userId}`);
+      } else {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(results));
+      }
+    })
+    .catch((error) => {
+      res.statusCode = 500;
+      res.end('Internal Server Error');
+    });
+}
+
+function addToCart(req, res) {
+  let requestBody = '';
+
+  req.on('data', (data) => {
+    requestBody += data;
+  });
+
+  req.on('end', () => {
+    let parsedBody;
+
+    try {
+      parsedBody = JSON.parse(requestBody);
+      console.log('Request body parsed:', parsedBody);
+
+      const { book_id, user_id, quantity } = parsedBody;
+
+      console.log(`Adding to cart for book_id: ${book_id}, user_id: ${user_id}, quantity: ${quantity}`);
+      return new Promise((resolve, reject) => {
+        if (!book_id || !user_id || !quantity || quantity <= 0) {
+          console.error('Invalid parameters for adding to cart');
+          reject({ statusCode: 400, message: 'Invalid parameters' });
+          return;
+        }
+
+        const checkQuantityQuery = 'SELECT Quantity FROM BookListing WHERE BookID = ?';
+
+        connection.query(checkQuantityQuery, [book_id], (err, result) => {
+          if (err) {
+            console.error('Error checking quantity: ' + err.stack);
+            reject({ statusCode: 500, message: 'Error checking quantity' });
+            return;
+          }
+
+          if (result.length === 0 || result[0].Quantity < quantity) {
+            console.log('Insufficient quantity available');
+            reject({ statusCode: 400, message: 'Insufficient quantity available' });
+            return;
+          }
+
+          const updateCartQuery = `
+            INSERT INTO Cart (UserID, BookID, Quantity)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE Quantity = Quantity + ?;
+          `;
+
+          connection.query(updateCartQuery, [user_id, book_id, quantity, quantity], (err) => {
+            if (err) {
+              console.error('Error updating the cart: ' + err.stack);
+              reject({ statusCode: 500, message: 'Error updating the cart' });
+              return;
+            }
+
+            console.log('Product added to the cart');
+            resolve({ statusCode: 200, message: 'Product added to the cart' });
+          });
+        });
+      })
+      .then((result) => {
+        // Use writeHead instead of status
+        res.writeHead(result.statusCode, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: result.message }));
+      })
+      .catch((error) => {
+        res.writeHead(error.statusCode, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: error.message }));
+      });
+    } catch (error) {
+      console.error('Error parsing request body:', error);
+      res.writeHead(400, { 'Content-Type': 'text/plain' });
+      res.end('Invalid JSON format in request body');
+      return;
+    }
+  });
+}
+
+
 const server = http.createServer((req, res) => {
   console.log(`Received request: ${req.method} ${req.url}`);
 
@@ -655,7 +731,11 @@ const server = http.createServer((req, res) => {
   }
   else if (req.method === 'POST' && req.url.startsWith('/purchase_product')) {
     purchaseProduct(req, res);
-  } else if (req.method === 'GET' && req.url.startsWith('/purchase_history')) {
+  }
+  else if (req.method === 'POST' && req.url.startsWith('/add_cart')) {
+    addToCart(req, res);
+  } 
+  else if (req.method === 'GET' && req.url.startsWith('/purchase_history')) {
     viewPurchaseHistory(req, res);
   } 
   else {
