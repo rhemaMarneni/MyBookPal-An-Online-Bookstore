@@ -1,133 +1,148 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="listAllBooks.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyBookPal</title>
+    <link rel="stylesheet" href="listAllBooks.css" />
     <script src="listAllBooks.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header>
-        <div class="brand">MyBookPal</div>
-        <nav>
-            <ul class="nav-menu">
-                <li><a href="#books" class="books-icon">Books</a></li>
-                <li><a href="#ebooks" class="ebooks-icon">eBooks</a></li>
-                <li><a href="#audiobooks" class="audiobooks-icon">Audiobooks</a></li>
-                <li><a href="#bestsellers" class="bestsellers-icon">Bestsellers</a></li>
-                <li><a href="#comingsoon" class="comingsoon-icon">Coming Soon</a></li>
-                <li><a href="#giftcards" class="giftcards-icon">Gift Cards</a></li>
-                <li><a href="#membership" class="membership_icon">Memberships</a></li>
-            </ul>
-        </nav>
-        <ul class="user-menu">
-            <li><a href="#account" class="account-icon">My Account</a></li>
-            <li><a href="#wishlist" class="wishlist-icon">Wishlist</a></li>
-            <li><a href="#cart" class="cart-icon">Cart</a></li>
+      <div class="brand">MyBookPal</div>
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="#books" class="books-icon">Books</a></li>
+          <li><a href="#ebooks" class="ebooks-icon">eBooks</a></li>
+          <li><a href="#audiobooks" class="audiobooks-icon">Audiobooks</a></li>
+          <li>
+            <a href="#bestsellers" class="bestsellers-icon">Bestsellers</a>
+          </li>
+          <li><a href="#comingsoon" class="comingsoon-icon">Coming Soon</a></li>
+          <li><a href="#giftcards" class="giftcards-icon">Gift Cards</a></li>
+          <li><a href="#membership" class="membership_icon">Memberships</a></li>
         </ul>
+      </nav>
+      <ul class="user-menu">
+        <li><a href="#account" class="account-icon">My Account</a></li>
+        <li><a href="#wishlist" class="wishlist-icon">Wishlist</a></li>
+        <li><a href="#cart" class="cart-icon">Cart</a></li>
+      </ul>
     </header>
-    <div class ="search-bar">
-        <input type="text" placeholder="Search for books">
-        <button type="submit">Search</button>
-        <div class="order-filter">
-            <label for="orderBy">Sort By:</label>
-            <select id="orderBy">
-                <option value="lowToHigh">Low to High</option>
-                <option value="highToLow">High to Low</option>
-            </select>
-    
-            <label for="priceFilter">Price:</label>
-            <select id="priceFilter">
-                <option value="greaterThan50">Greater than 50</option>
-                <option value="lessThan50">Less than 50</option>
-                <option value="greaterThan10">Greater than 10</option>
-                <option value="lessThan10">Less than 10</option>
-            </select>
-        </div>
+    <div class="search-bar">
+      <input type="text" placeholder="Search for books" />
+      <button type="submit">Search</button>
+      <div class="order-filter">
+        <label for="orderBy">Sort By:</label>
+        <select id="orderBy">
+          <option value="lowToHigh">Low to High</option>
+          <option value="highToLow">High to Low</option>
+        </select>
+
+        <label for="priceFilter">Price:</label>
+        <select id="priceFilter">
+          <option value="greaterThan50">Greater than 50</option>
+          <option value="lessThan50">Less than 50</option>
+          <option value="greaterThan10">Greater than 10</option>
+          <option value="lessThan10">Less than 10</option>
+        </select>
+      </div>
+    </div>
+    <div class="intro-image">
+      <img src="assets/mybookpal.png" alt="MyBookPal">
     </div>
     <div class="container">
-        <form>
-            <div class="filter-container">
-                <h2>Filter</h2>
-                <div class ="filter-category">
-                <h3>Categories</h3>
-                <div class="filter-btn">
-                  <input type="checkbox" name="all"/>
-                  <label for="all">Show All </label>
-                </div>
-
-                <div class="filter-btn">
-                  <input type="checkbox" class="filter-btn" name="fiction"/>
-                  <label for="fiction">Fiction </label>
-                </div>
-
-                <div class="filter-btn">
-                    <input type="checkbox" class="filter-btn" name="fantasy"/>
-                    <label for="fantasy">Fantasy </label>
-                </div>
-
-                <div class="filter-btn">
-                    <input type="checkbox" class="filter-btn" name="science fiction"/>
-                    <label for="science fiction">Science Fiction </label>
-                </div>
-                
-                <div class="filter-btn">
-                    <input type="checkbox" class="filter-btn" name="romance"/>
-                    <label for="romance">Romance </label>
-                </div>
-
-                <div class="filter-btn">
-                    <input type="checkbox" class="filter-btn" name="mystery"/>
-                    <label for="mystery">Mystery </label>
-                </div>
-               
-                </div>
-                <div class="filter-condition">
-                  <h3>Book-Conditon</h3>
-                  <div class="filter-btn">
-                    <input type="checkbox" class="filter-btn" name="used"/>
-                    <label for="used">Used</label>
-                  </div>
-
-                  <div class="filter-btn">
-                    <input type="checkbox" class="filter-btn" name="new"/>
-                    <label for="new">New</label>
-                  </div>
-
-                  <div class="filter-btn">
-                    <input type="checkbox" class="filter-btn" name="like-new"/>
-                    <label for="like-new">Like new</label>
-                  </div>
-                </div>
+      <form>
+        <div class="filter-container">
+          <h2>Filter</h2>
+          <div class="filter-category">
+            <h3>Categories</h3>
+            <div class="filter-btn">
+              <input type="checkbox" name="all" />
+              <label for="all">Show All </label>
             </div>
-        </form>
-    
-        <div class="book-list">
-          <div class="book" data-category="fiction">
-            <img src="assets/book1.jpg" alt="Book 1">
-            <h3><a href="#book1">Book Title 1</a></h3>
-            <p>Author: Author 1</p>
-            <p>Category: Fiction</p>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="fiction" />
+              <label for="fiction">Fiction </label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="fantasy" />
+              <label for="fantasy">Fantasy </label>
+            </div>
+
+            <div class="filter-btn">
+              <input
+                type="checkbox"
+                class="filter-btn"
+                name="science fiction"
+              />
+              <label for="science fiction">Science Fiction </label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="romance" />
+              <label for="romance">Romance </label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="mystery" />
+              <label for="mystery">Mystery </label>
+            </div>
           </div>
-    
-          <div class="book" data-category="nonfiction">
-            <img src="./assets/book2.jpg" alt="Book 2">
-            <h3><a href="#book2">Book Title 2</a></h3>
-            <p>Author: Author 2</p>
-            <p>Category: Nonfiction</p>
-          </div>
-    
-          <div class="book" data-category="fiction">
-            <img src="./assets/book3.jpg" alt="Book 3">
-            <h3><a href="#book3">Book Title 3</a></h3>
-            <p>Author: Author 3</p>
-            <p>Category: Fiction</p>
+          <div class="filter-condition">
+            <h3>Book-Condition</h3>
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="used" />
+              <label for="used">Used</label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="new" />
+              <label for="new">New</label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="like-new" />
+              <label for="like-new">Like new</label>
+            </div>
           </div>
         </div>
+      </form>
+
+      <div class="book-list">
+        <div class="book" data-category="fiction" onclick="redirectToAnotherPage(1)">
+          <!-- <img src="assets/book1.jpg" alt="Book 1" /> -->
+          <h3><a href="#book1">Book Title 1</a></h3>
+          <p>Author: Author 1</p>
+          <p>Category: Fiction</p>
+        </div>
+
+        <div class="book" data-category="nonfiction" onclick="redirectToAnotherPage(2)">
+          <!-- <img src="./assets/book2.jpg" alt="Book 2" /> -->
+          <h3><a href="#book2">Book Title 2</a></h3>
+          <p>Author: Author 2</p>
+          <p>Category: Nonfiction</p>
+        </div>
+
+        <div class="book" data-category="fiction" onclick="redirectToAnotherPage(3)">
+          <!-- <img src="./assets/book3.jpg" alt="Book 3" /> -->
+          <h3><a href="#book3">Book Title 3</a></h3>
+          <p>Author: Author 3</p>
+          <p>Category: Fiction</p>
+        </div>
       </div>
-    
-</body>
+    </div>
+    <div id="bookdetails"></div>
+
+    <script>
+      function redirectToAnotherPage(bookId) {
+        redirectURL = `bookDisplay.html?id=${bookId}`
+        // alert("The book id is " + typeof bookId + " " + str);
+        window.location.href = redirectURL;
+      }
+    </script>
+  </body>
 </html>
