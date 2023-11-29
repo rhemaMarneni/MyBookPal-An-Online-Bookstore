@@ -5,6 +5,7 @@ const fs = require('fs');
 
 // Create a MySQL database connection
 const db = mysql.createConnection({
+    // ... [database configuration]
     host: 'localhost',
     user: 'admin',
     password: 'password',
@@ -13,11 +14,11 @@ const db = mysql.createConnection({
 
 // Connect to the database
 db.connect((err) => {
+    // ... [database connection logic]
     if (err) {
         console.error('MySQL Connection Error: ' + err.stack);
         return;
-    }
-    console.log('Connected to MySQL database');
+    }console.log('Connected to MySQL database');
 });
 
 // Create an HTTP server
@@ -25,197 +26,222 @@ const server = http.createServer((req, res) => {
     const reqUrl = url.parse(req.url, true);
     const { pathname } = reqUrl;
 
-    // Handle POST request to '/login'
     if (pathname === '/login' && req.method === 'POST') {
-        let data = '';
-        req.on('data', (chunk) => {
-            data += chunk;
-        });
-
-        req.on('end', () => {
-            const formData = JSON.parse(data);
-            const username = formData.username;
-            const password = formData.password;
-            console.log('login', username, password);
-
-            // Check username and password against the database
-            const query = 'SELECT * FROM CUSTOMER WHERE UserID = ? AND UserPassword = ?';
-            db.query(query, [username, password], (err, results) => {
-                if (err) {
-                    res.writeHead(500, { 'Content-Type': 'text/plain' });
-                    res.end('Internal Server Error');
-                } else {
-                    console.log('login', err);
-                    if (results.length > 0) {
-                        res.writeHead(200, { 'Content-Type': 'text/plain' });
-                        res.end('Login Successful');
-                    } else {
-                        res.writeHead(401, { 'Content-Type': 'text/plain' });
-                        res.end('Login Failed');
-                    }
-                }
-            });
-        });
+        handleLogin(req, res);
+    } else if (pathname === '/register' && req.method === 'POST') {
+        handleRegister(req, res);
+    } else if (req.method === 'PUT' && pathname.startsWith('/customers/')) {
+        handleUpdateCustomer(req, res, pathname);
+    } else if (req.method === 'GET' && pathname === '/customers') {
+        handleGetAllCustomers(req, res);
+    } else if (req.method === 'GET' && pathname.startsWith('/customers/')) {
+        handleGetCustomer(req, res, pathname);
+    } else if (req.method === 'GET' && pathname.startsWith('/get-books/')) {
+        handleGetBooks(req, res, pathname);
+    } else {
+        handleDefaultGet(req, res);
     }
+});
 
-    // Handle POST request to '/register'
-    else if (pathname === '/register' && req.method === 'POST') {
-        let data = '';
-        req.on('data', (chunk) => {
-            data += chunk;
-        });
+// Function to handle login
+function handleLogin(req, res) {
+    // ... [login logic]
+    let data = '';
+    req.on('data', (chunk) => {
+        data += chunk;
+    });
 
-        req.on('end', () => {
-            const formData = JSON.parse(data);
-            const username = formData.username;
-            const password = formData.password;
-            const firstName = formData.first_name;
-            const lastName = formData.last_name;
-            const usertype = formData.user_type;
-            const email = formData.email;
-            const address = formData.address;
-            const phone = formData.phone;
+    req.on('end', () => {
+        const formData = JSON.parse(data);
+        const username = formData.username;
+        const password = formData.password;
+        console.log('login', username, password);
 
-            // Validate phone number length
-            const maxPhoneLength = 20; // This should match the length defined in your DB
-            if (phone.length > maxPhoneLength) {
-                res.writeHead(400, { 'Content-Type': 'text/plain' });
-                res.end('Phone number is too long');
-                return;
+        // Check username and password against the database
+        const query = 'SELECT * FROM CUSTOMER WHERE UserID = ? AND UserPassword = ?';
+        db.query(query, [username, password], (err, results) => {
+            if (err) {
+                res.writeHead(500, { 'Content-Type': 'text/plain' });
+                res.end('Internal Server Error');
+            } else {
+                console.log('login', err);
+                if (results.length > 0) {
+                    res.writeHead(200, { 'Content-Type': 'text/plain' });
+                    res.end('Login Successful');
+                } else {
+                    res.writeHead(401, { 'Content-Type': 'text/plain' });
+                    res.end('Login Failed');
+                }
             }
-
-            // Check if the username already exists in the database
-            const usernameCheckQuery = 'SELECT UserID FROM CUSTOMER WHERE UserID = ?';
-            db.query(usernameCheckQuery, [username], (err, results) => {
-                if (err) {
-                    console.log("Error checking username", err);
-                    res.writeHead(500, { 'Content-Type': 'text/plain' });
-                    res.end('Registration Failed');
-                } else if (results.length > 0) {
-                    res.writeHead(400, { 'Content-Type': 'text/plain' });
-                    res.end('Username already exists');
-                } else {
-                    // Insert the new user into the database
-                    const insertQuery = 'INSERT INTO CUSTOMER (UserID, FirstName, LastName, PhoneNumber, Email, UserAddress, UserPassword, UserType) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-                    db.query(insertQuery, [username, firstName, lastName, phone, email, address, password, usertype], (err) => {
-                        if (err) {
-                            console.log("Error inserting new user", err);
-                            res.writeHead(500, { 'Content-Type': 'text/plain' });
-                            res.end('Registration Failed');
-                        } else {
-                            res.writeHead(200, { 'Content-Type': 'text/plain' });
-                            res.end('Registration Successful');
-                        }
-                    });
-                }
-            });
         });
-    }
+    });
+}
 
-    // Handle PUT request to '/customers/:username'
-    else if (req.method === 'PUT' && pathname.startsWith('/customers/')) {
-        const Username = pathname.split('/')[2];
-        let data = '';
-        req.on('data', (chunk) => {
-            data += chunk;
-        });
+// Function to handle registration
+function handleRegister(req, res) {
+    // ... [registration logic]
+    let data = '';
+    req.on('data', (chunk) => {
+        data += chunk;
+    });
 
-        req.on('end', () => {
-            try {
-                const customer = JSON.parse(data);
-                let update_customer = customer;
-                db.query('UPDATE Customer SET FirstName = ?, LastName = ?, PhoneNumber = ?, Email = ?, UserAddress = ?, UserPassword = ?, UserType = ? WHERE UserID = ?', 
-                         [update_customer.first_name, update_customer.last_name, update_customer.phone, update_customer.email, update_customer.address, update_customer.password, update_customer.user_type, Username], 
-                         (err) => {
+    req.on('end', () => {
+        const formData = JSON.parse(data);
+        const username = formData.username;
+        const password = formData.password;
+        const firstName = formData.first_name;
+        const lastName = formData.last_name;
+        const usertype = formData.user_type;
+        const email = formData.email;
+        const address = formData.address;
+        const phone = formData.phone;
+
+        // Validate phone number length
+        const maxPhoneLength = 20; // This should match the length defined in your DB
+        if (phone.length > maxPhoneLength) {
+            res.writeHead(400, { 'Content-Type': 'text/plain' });
+            res.end('Phone number is too long');
+            return;
+        }
+
+        // Check if the username already exists in the database
+        const usernameCheckQuery = 'SELECT UserID FROM CUSTOMER WHERE UserID = ?';
+        db.query(usernameCheckQuery, [username], (err, results) => {
+            if (err) {
+                console.log("Error checking username", err);
+                res.writeHead(500, { 'Content-Type': 'text/plain' });
+                res.end('Registration Failed');
+            } else if (results.length > 0) {
+                res.writeHead(400, { 'Content-Type': 'text/plain' });
+                res.end('Username already exists');
+            } else {
+                // Insert the new user into the database
+                const insertQuery = 'INSERT INTO CUSTOMER (UserID, FirstName, LastName, PhoneNumber, Email, UserAddress, UserPassword, UserType) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+                db.query(insertQuery, [username, firstName, lastName, phone, email, address, password, usertype], (err) => {
                     if (err) {
-                        res.statusCode = 500;
-                        res.end('Internal Server Error');
+                        console.log("Error inserting new user", err);
+                        res.writeHead(500, { 'Content-Type': 'text/plain' });
+                        res.end('Registration Failed');
                     } else {
-                        res.statusCode = 200;
-                        res.end('Customer updated');
+                        res.writeHead(200, { 'Content-Type': 'text/plain' });
+                        res.end('Registration Successful');
                     }
                 });
-            } catch (err) {
-                res.statusCode = 400;
-                res.end('Invalid request');
             }
         });
-    }
+    });
+}
 
-    // Handle GET request for all customers
-    else if (req.method === 'GET' && pathname === '/customers') {
-        db.query('SELECT UserID, FirstName, LastName, PhoneNumber, Email, UserAddress, UserType FROM Customer', (err, rows) => {
-            if (err) {
-                res.statusCode = 500;
-                res.end('Internal Server Error');
-            } else {
-                res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify(rows));
-            }
-        });
-    }
+// Function to handle updating a customer
+function handleUpdateCustomer(req, res, pathname) {
+    // ... [update customer logic]
+    const Username = pathname.split('/')[2];
+    let data = '';
+    req.on('data', (chunk) => {
+        data += chunk;
+    });
 
-    // Handle GET request for a specific customer
-    else if (req.method === 'GET' && pathname.startsWith('/customers/')) {
-        const Username = pathname.split('/')[2];
-        db.query('SELECT UserID, FirstName, LastName, PhoneNumber, Email, UserAddress, UserType FROM Customer WHERE UserID = ?', [Username], (err, row) => {
-            if (err) {
-                res.statusCode = 500;
-                res.end('Internal Server Error');
-            } else if (!row) {
-                res.statusCode = 404;
-                res.end('Customer not found');
-            } else {
-                res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify(row));
-            }
-        });
-    }
-
-    // Handle GET request for books
-    else if (req.method === 'GET' && pathname.startsWith('/get-books/')) {
-        const queryParams = pathname.split('/')[2];
+    req.on('end', () => {
         try {
-            const filterCriteria = JSON.parse(queryParams.filter);
-
-            if (Object.keys(filterCriteria).length === 0) {
-                res.writeHead(400, { 'Content-Type': 'text/plain' });
-                res.end('Filter criteria cannot be empty');
-                return;
-            }
-            const conditions = [];
-            for (const key in filterCriteria) {
-                if (filterCriteria.hasOwnProperty(key)) {
-                    const value = filterCriteria[key];
-                    conditions.push(`${key} = ${db.escape(value)}`);
-                }
-            }
-            const whereClause = conditions.join(' AND ');
-            const query = `SELECT * FROM BookListing WHERE ${whereClause}`;
-
-            db.query(query, (err, results) => {
+            const customer = JSON.parse(data);
+            let update_customer = customer;
+            db.query('UPDATE Customer SET FirstName = ?, LastName = ?, PhoneNumber = ?, Email = ?, UserAddress = ?, UserPassword = ?, UserType = ? WHERE UserID = ?', 
+                     [update_customer.first_name, update_customer.last_name, update_customer.phone, update_customer.email, update_customer.address, update_customer.password, update_customer.user_type, Username], 
+                     (err) => {
                 if (err) {
-                    console.error('Database error: ' + err);
-                    res.writeHead(500, { 'Content-Type': 'text/plain' });
+                    res.statusCode = 500;
                     res.end('Internal Server Error');
                 } else {
-                    if (results.length > 0) {
-                        res.writeHead(200, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify(results));
-                    } else {
-                        res.writeHead(404, { 'Content-Type': 'text/plain' });
-                        res.end('No books found with the specified criteria');
-                    }
+                    res.statusCode = 200;
+                    res.end('Customer updated');
                 }
             });
-        } catch (error) {
-            res.writeHead(400, { 'Content-Type': 'text/plain' });
-            res.end('Invalid JSON request');
+        } catch (err) {
+            res.statusCode = 400;
+            res.end('Invalid request');
         }
-    }
+    });
+}
 
-    // Handle all other GET requests
-    else {
+// Function to handle getting all customers
+function handleGetAllCustomers(req, res) {
+    // ... [get all customers logic]
+    db.query('SELECT UserID, FirstName, LastName, PhoneNumber, Email, UserAddress, UserType FROM Customer', (err, rows) => {
+        if (err) {
+            res.statusCode = 500;
+            res.end('Internal Server Error');
+        } else {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(rows));
+        }
+    });
+}
+
+// Function to handle getting a specific customer
+function handleGetCustomer(req, res, pathname) {
+    // ... [get specific customer logic]
+    const Username = pathname.split('/')[2];
+    db.query('SELECT UserID, FirstName, LastName, PhoneNumber, Email, UserAddress, UserType FROM Customer WHERE UserID = ?', [Username], (err, row) => {
+        if (err) {
+            res.statusCode = 500;
+            res.end('Internal Server Error');
+        } else if (!row) {
+            res.statusCode = 404;
+            res.end('Customer not found');
+        } else {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(row));
+        }
+    });
+}
+
+// Function to handle getting books based on filter criteria
+function handleGetBooks(req, res, pathname) {
+    // ... [get books logic]
+    const queryParams = pathname.split('/')[2];
+    try {
+        const filterCriteria = JSON.parse(queryParams.filter);
+
+        if (Object.keys(filterCriteria).length === 0) {
+            res.writeHead(400, { 'Content-Type': 'text/plain' });
+            res.end('Filter criteria cannot be empty');
+            return;
+        }
+        const conditions = [];
+        for (const key in filterCriteria) {
+            if (filterCriteria.hasOwnProperty(key)) {
+                const value = filterCriteria[key];
+                conditions.push(`${key} = ${db.escape(value)}`);
+            }
+        }
+        const whereClause = conditions.join(' AND ');
+        const query = `SELECT * FROM BookListing WHERE ${whereClause}`;
+
+        db.query(query, (err, results) => {
+            if (err) {
+                console.error('Database error: ' + err);
+                res.writeHead(500, { 'Content-Type': 'text/plain' });
+                res.end('Internal Server Error');
+            } else {
+                if (results.length > 0) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(results));
+                } else {
+                    res.writeHead(404, { 'Content-Type': 'text/plain' });
+                    res.end('No books found with the specified criteria');
+                }
+            }
+        });
+    } catch (error) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Invalid JSON request');
+    }
+}
+
+// Function to handle default GET requests
+function handleDefaultGet(req, res) {
+    fs.readFile('login.html', (err, data) => {
+        // ... [default GET logic]
         fs.readFile('login.html', (err, data) => {
             if (err) {
                 res.writeHead(500, { 'Content-Type': 'text/html' });
@@ -225,8 +251,8 @@ const server = http.createServer((req, res) => {
                 res.end(data);
             }
         });
-    }
-});
+    });
+}
 
 // Function to check password strength (if needed)
 function isStrongPassword(password) {
