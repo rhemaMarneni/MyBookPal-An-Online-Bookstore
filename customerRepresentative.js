@@ -4,7 +4,7 @@ const path = require('path');
 const querystring = require('querystring');
 const mysql = require('mysql');
 
-const port = 3000;
+const port = 8081;
 
 // Database connection setup
 const connection = mysql.createConnection({
