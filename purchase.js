@@ -607,8 +607,10 @@ function viewUserCart(req, res) {
   const userId = queryParameters.get('id');
 
   if (!userId || isNaN(userId)) {
+    console.error('Invalid User ID:', userId);
     res.statusCode = 400; // Bad Request
-    res.end('Invalid User ID');
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ error: 'Invalid User ID' }));
     return;
   }
 
@@ -622,7 +624,7 @@ function viewUserCart(req, res) {
   new Promise((resolve, reject) => {
     connection.query(selectQuery, [userId], (err, results) => {
       if (err) {
-        console.error('Error querying the database: ' + err.stack);
+        console.error('Error querying the database:', err);
         reject(err);
         return;
       }
@@ -632,18 +634,25 @@ function viewUserCart(req, res) {
   })
     .then((results) => {
       if (results.length === 0) {
+        console.log(`Cart is empty for user_id ${userId}`);
         res.statusCode = 404; // Not Found
-        res.end(`Cart is empty for user_id ${userId}`);
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ message: `Cart is empty for user_id ${userId}` }));
       } else {
+        console.log(`User cart retrieved successfully for user_id ${userId}`);
+        res.statusCode = 200; // OK
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(results));
       }
     })
     .catch((error) => {
-      res.statusCode = 500;
-      res.end('Internal Server Error');
+      console.error('Internal Server Error:', error);
+      res.statusCode = 500; // Internal Server Error
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Internal Server Error' }));
     });
 }
+
 
 //Function to add the products to the cart
 function addToCart(req, res) {
@@ -720,6 +729,7 @@ function addToCart(req, res) {
     }
   });
 }
+
 // Function to delete all products from the cart for a user
 function deleteFromCart(req, res) {
   const queryParameters = new URLSearchParams(req.url.split('?')[1]);
@@ -788,7 +798,6 @@ function deleteFromCart(req, res) {
     res.end(JSON.stringify({ message: 'Internal Server Error' }));
   });
 }
-
 
 const server = http.createServer((req, res) => {
   console.log(`Received request: ${req.method} ${req.url}`);
