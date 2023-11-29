@@ -3,48 +3,8 @@ const mysql = require('mysql2');
 const url = require('url');
 const fs = require('fs');
 
-// Create a MySQL database connection
-const db = mysql.createConnection({
-    // ... [database configuration]
-    host: 'localhost',
-    user: 'admin',
-    password: 'password',
-    database: 'mybookpal',
-});
-
-// Connect to the database
-db.connect((err) => {
-    // ... [database connection logic]
-    if (err) {
-        console.error('MySQL Connection Error: ' + err.stack);
-        return;
-    }console.log('Connected to MySQL database');
-});
-
-// Create an HTTP server
-const server = http.createServer((req, res) => {
-    const reqUrl = url.parse(req.url, true);
-    const { pathname } = reqUrl;
-
-    if (pathname === '/login' && req.method === 'POST') {
-        handleLogin(req, res);
-    } else if (pathname === '/register' && req.method === 'POST') {
-        handleRegister(req, res);
-    } else if (req.method === 'PUT' && pathname.startsWith('/customers/')) {
-        handleUpdateCustomer(req, res, pathname);
-    } else if (req.method === 'GET' && pathname === '/customers') {
-        handleGetAllCustomers(req, res);
-    } else if (req.method === 'GET' && pathname.startsWith('/customers/')) {
-        handleGetCustomer(req, res, pathname);
-    } else if (req.method === 'GET' && pathname.startsWith('/get-books/')) {
-        handleGetBooks(req, res, pathname);
-    } else {
-        handleDefaultGet(req, res);
-    }
-});
-
 // Function to handle login
-function handleLogin(req, res) {
+function handleLogin(db, req, res) {
     // ... [login logic]
     let data = '';
     req.on('data', (chunk) => {
@@ -78,7 +38,7 @@ function handleLogin(req, res) {
 }
 
 // Function to handle registration
-function handleRegister(req, res) {
+function handleRegister(db, req, res) {
     // ... [registration logic]
     let data = '';
     req.on('data', (chunk) => {
@@ -133,7 +93,7 @@ function handleRegister(req, res) {
 }
 
 // Function to handle updating a customer
-function handleUpdateCustomer(req, res, pathname) {
+function handleUpdateCustomer(db, req, res, pathname) {
     // ... [update customer logic]
     const Username = pathname.split('/')[2];
     let data = '';
@@ -164,7 +124,7 @@ function handleUpdateCustomer(req, res, pathname) {
 }
 
 // Function to handle getting all customers
-function handleGetAllCustomers(req, res) {
+function handleGetAllCustomers(db, req, res) {
     // ... [get all customers logic]
     db.query('SELECT UserID, FirstName, LastName, PhoneNumber, Email, UserAddress, UserType FROM Customer', (err, rows) => {
         if (err) {
@@ -178,7 +138,7 @@ function handleGetAllCustomers(req, res) {
 }
 
 // Function to handle getting a specific customer
-function handleGetCustomer(req, res, pathname) {
+function handleGetCustomer(db, req, res, pathname) {
     // ... [get specific customer logic]
     const Username = pathname.split('/')[2];
     db.query('SELECT UserID, FirstName, LastName, PhoneNumber, Email, UserAddress, UserType FROM Customer WHERE UserID = ?', [Username], (err, row) => {
@@ -196,7 +156,7 @@ function handleGetCustomer(req, res, pathname) {
 }
 
 // Function to handle getting books based on filter criteria
-function handleGetBooks(req, res, pathname) {
+function handleGetBooks(db, req, res, pathname) {
     // ... [get books logic]
     const queryParams = pathname.split('/')[2];
     try {
@@ -239,7 +199,7 @@ function handleGetBooks(req, res, pathname) {
 }
 
 // Function to handle default GET requests
-function handleDefaultGet(req, res) {
+function handleDefaultGet(db, req, res) {
     fs.readFile('login.html', (err, data) => {
         // ... [default GET logic]
         fs.readFile('login.html', (err, data) => {
@@ -269,8 +229,13 @@ function sendSMSNotification(phoneNumber, message) {
     });
 }
 
-// Start the server
-const port = 3000;
-server.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
+
+module.exports ={
+    handleLogin,
+    handleRegister,
+    handleUpdateCustomer,
+    handleGetAllCustomers,
+    handleGetCustomer,
+    handleGetBooks,
+    handleDefaultGet
+}
