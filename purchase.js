@@ -772,11 +772,131 @@ function deleteFromCart(connection, req, res) {
   });
 }
 
+//Function for a user to place bid
+function placeBid(connection, req, res) {
+  let requestBody = '';
+
+  req.on('data', (data) => {
+    requestBody += data;
+  });
+
+  req.on('end', () => {
+    let parsedBody;
+
+    try {
+      parsedBody = JSON.parse(requestBody);
+      console.log('Request body parsed:', parsedBody);
+      const { book_id, user_id, priceList, maxLimit, autoBid } = parsedBody;
+      console.log(`Adding to bids for book_id: ${book_id}, user_id: ${user_id}, priceList: ${priceList}`);
+      var curr_Wallet;
+      var firstBid=true;
+      return new Promise((resolve, reject) => {
+        const selectQuery = 'SELECT WalletBalance FROM wallet WHERE UserID = ?';
+        connection.query(selectQuery, [userId], (err, results) => {
+          if (err) {
+            console.error('Error querying the database: ' + err.stack);
+            reject({ statusCode: 500, message: 'Internal Server Error' });
+            return;
+          }
+          console.log('Wallet balance query results:', results);
+          if (results[0]) {
+            curr_Wallet = results[0].WalletBalance;
+          } 
+          else {
+            console.log(`No wallet balance found for user ${userId}`);
+            reject({ statusCode: 404, message: `No wallet balance found for user ${userId}` });
+          }
+        });
+        const selectAuctionQuery= 'SELECT EndDateTime FROM Auction WHERE BookID= ?';
+        var currentTime= new Date();
+        connection.query(selectAuctionQuery, [book_id], (err, results) =>{
+          if(err){
+            console.error('Error querying the database: ' + err.stack);
+            reject({statusCode: 500, message: 'Internal Server Error'});
+            return;
+          }
+          console.log('Auction details are: ', results);
+
+          if(results[0] && currentTime<result[0].EndDateTime){
+            console.log('Auction is Valid');
+          }
+          else{
+            console.log(`No auction found for book: ${book_id}`);
+            reject({statusCode: 404, message: `No auction found for book ${book_id}`});
+            return;
+          }
+        });
+        if (!book_id || !user_id || !priceList || !autoBid || priceList > curr_Wallet) {
+          console.error('Invalid parameters for participating in auction');
+          reject({ statusCode: 400, message: 'Invalid parameters' });
+          return;
+        }
+        const userBidQuery= 'SELECT * FROM Bids WHERE BookID= ? AND UserID= ?;';
+        var previousPriceList, previousAutoBid, previousMaxLimit;
+        connection.query(userBidQuery, [book_id, user_id], (err, results) =>{
+          if(err){
+            console.error('Error querying the database: '+ err.stack);
+            reject({statusCode: 500, message: 'Internal Server Error'});
+            return;
+          }
+          console.log('Previous bids: ', results);
+          if(results.length > 0 & results[0]){
+            firstBid=false;
+            previousPriceList=results[0].PriceList;
+            previousAutoBid=results[0].AutoBid;
+            previousMaxLimit=results[0].MaxLimit;
+          }
+        });
+        if(autoBid==true){
+          if(!maxLimit || maxLimit>curr_Wallet){
+            console.error('Invalid parameters for participating in auction');
+            reject({ statusCode: 400, message: 'Invalid parameters' });
+            return;
+          }
+        }
+        const updateBidQuery = `INSERT INTO Bids (UserID, BookID, PriceList, MaxLimit, AutoBid)
+          VALUES (?, ?, ?, ?, ?);`;
+          connection.query(updateBidQuery, [user_id, book_id, priceList, maxLimit, autoBid], (err) => {
+            if (err) {
+              console.error('Error adding a new bid: ' + err.stack);
+              reject({ statusCode: 500, message: 'Error adding new bid' });
+              return;
+            }
+            if(autoBid==true){
+              updateWallet(connection, UserID, maxLimit, 'sub');
+            }
+            else{
+              updateWallet(connection, UserID, priceList, 'sub');
+            }
+            console.log('Successfully participating in the bid');
+            resolve({ statusCode: 200, message: 'Your are in the auction' });
+          });
+        })
+      .then((result) => {
+        // Use writeHead instead of status
+        res.writeHead(result.statusCode, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: result.message }));
+      })
+      .catch((error) => {
+        res.writeHead(error.statusCode, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: error.message }));
+      });
+    } catch (error) {
+      console.error('Error parsing request body:', error);
+      res.writeHead(400, { 'Content-Type': 'text/plain' });
+      res.end('Invalid JSON format in request body');
+      return;
+    }
+  });
+}
+
+
 module.exports = {
     viewUserCart,
     viewPurchaseHistory,
     deleteFromCart,
     addToCart,
     addBalancetoWallet,
-    purchaseProduct
+    purchaseProduct,
+    placeBid
 }
