@@ -46,6 +46,7 @@ setInterval(() => {
 const server = http.createServer((req, res) => {
   const reqUrl = url.parse(req.url, true);
   const { pathname } = reqUrl;
+  const qs = require("qs");
   const myparams = reqUrl.query || {};
   const params = qs.parse(myparams);
 
