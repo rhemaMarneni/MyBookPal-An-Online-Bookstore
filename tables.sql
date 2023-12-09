@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS BookListing (
     Book_description TEXT NOT NULL,
     Quantity INT NOT NULL,
     Auction TINYINT(1) DEFAULT 0,
+    AuctionStatus TINYINT(1) DEFAULT 1,
     Photos VARCHAR(255)
 );
 
@@ -59,10 +60,10 @@ CREATE TABLE IF NOT EXISTS Auction (
 );
 
 CREATE TABLE IF NOT EXISTS Bids (
-   	 BidID INT PRIMARY KEY,
+   	 BidID INT AUTO_INCREMENT PRIMARY KEY,
    	 UserID INT,
    	 BookID INT,
-	 PriceList VARCHAR(20),
+	 PriceList VARCHAR(1000),
 	 MaxLimit INT,
 	 AutoBid BOOL,
 	FOREIGN KEY (BookID) REFERENCES BookListing(BookID),
