@@ -1,12 +1,14 @@
 const http = require('http');
 const url = require('url');
 const mysql = require('mysql2');
+const fs = require('fs');  // Add this line
+const path = require('path');  // Add this line
 const cron = require('node-cron');
 const { listAvailableBooks, borrowBooks, returnBooks, borrowedBooks } = require('./bookLending.js');
 const { checkReservedBooks, newSubscription, cancelSubscription, getSubscriptions, 
   getNotificationPreferences, updateNotificationPreferences } = require('./notificationRequests.js');
 const { getAllBooks, searchBooks, orderBooks, filterBooks, getBook,
- newBook, updateBook, deleteBook, deleteAll } = require('./listAllBooks.js');
+ newBook, updateBook, deleteBook, deleteAll, sortBooks } = require('./listAllBooksServer.js');
 const { viewUserCart, addBalancetoWallet, purchaseProduct, addToCart, viewPurchaseHistory,
  deleteFromCart} = require('./purchase.js');
 const { handleLogin, handleRegister, handleUpdateCustomer, handleGetAllCustomers, 
@@ -19,8 +21,8 @@ const { createBookListing, GetBookListing, EditListing, handleGetAuctionHistoryR
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'root',
-  database: 'project',
+  password: 'password',
+  database: 'libraryManagement',
 });
 
 // Connect to the database
@@ -49,7 +51,10 @@ const server = http.createServer((req, res) => {
   const qs = require("qs");
   const myparams = reqUrl.query || {};
   const params = qs.parse(myparams);
-
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   if (req.method === 'GET' && reqUrl.pathname.startsWith('/books/availableLending')) {
     listAvailableBooks(connection, req, res)
   } else if (req.method === 'POST' && reqUrl.pathname.startsWith('/books/borrow')) {
@@ -86,7 +91,11 @@ const server = http.createServer((req, res) => {
     orderBooks(connection, req, res);
   } else if (req.method === 'GET' && req.url.startsWith('/books/filter')) {
     filterBooks(connection, req, res);
-  } else if (req.method === 'GET' && req.url.startsWith('/books/')) {
+  } 
+  else if (req.method === 'GET' && req.url.startsWith('/books/sort')) {
+    sortBooks(connection, req, res);
+  }
+  else if (req.method === 'GET' && req.url.startsWith('/books/')) {
     getBook(connection, req, res);
   } else if (req.method === 'POST' && req.url.startsWith('/books/')) {
     newBook(connection, req, res);
