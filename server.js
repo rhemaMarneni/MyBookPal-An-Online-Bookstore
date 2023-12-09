@@ -16,7 +16,7 @@ const { handleLogin, handleRegister, handleUpdateCustomer, handleGetAllCustomers
 const { createBookListing, GetBookListing, EditListing, handleGetAuctionHistoryRequest, 
   handleGetFilterAuctionsRequest, handleGetFilterListingsRequest, handlePutEditAuctionRequest,
   handleDeleteListingRequest, handleDeleteAuctionRequest, handleRelistBookRequest,checkAndNotifyExpiredAuctions} = require('./sellerserver.js');
-
+const showBookDetails = require("./bookdetails.js");
 //Create a connection to your MySQL database
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -57,6 +57,8 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   if (req.method === 'GET' && reqUrl.pathname.startsWith('/books/availableLending')) {
     listAvailableBooks(connection, req, res)
+  } else if (reqUrl.pathname.startsWith("/displaybook") && req.method === "GET") {
+    showBookDetails(req,res,params, connection);
   } else if (req.method === 'POST' && reqUrl.pathname.startsWith('/books/borrow')) {
     const queryParams = new URLSearchParams(reqUrl.query);
     const Title = queryParams.get('Title');
