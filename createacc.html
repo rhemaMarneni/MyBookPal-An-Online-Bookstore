@@ -11,7 +11,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background-image: url('/Users/apurv_paliwal/Desktop/software_engineering_class/project_1/book-stack-library-room-blurred-600nw-621157613.webp');
+            background-image: url('https://as1.ftcdn.net/v2/jpg/01/16/67/08/1000_F_116670852_JuIzGlggScxHjQERXiAnsSvcpw24fvZo.jpg');
             background-size: cover;
             background-position: center;
         }
@@ -63,12 +63,12 @@
 <body>
     <div id="accountForm">
         <h2>Create Your Account</h2>
-        <form id="UserDetails" class="UserForm" form action="/register" method="post">
+        <form id="UserDetails" class="UserForm" method="post">
             <label for="firstName">First Name:</label>
             <input type="text" id="first_name" name="firstName" required><br>
 
             <label for="lastName">Last Name:</label>
-            <input type="text" id="first_name" name="lastName" required><br>
+            <input type="text" id="last_name" name="lastName" required><br>
 
             <label for="phone">Phone Number:</label>
             <input type="number" id="phone" name="phone" required><br>
@@ -136,6 +136,7 @@
                 } else {
                     console.log(data.token);
                     // Show a suitable alert message
+                    window.location.href = './login.html';
                     alert('User has been created, Welcome !');
                 }
             })

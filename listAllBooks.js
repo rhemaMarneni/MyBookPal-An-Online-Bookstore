@@ -203,6 +203,11 @@
 
 // });
 
+function redirectToAnotherPage(bookId) {
+      console.log(bookId)
+      redirectURL = `bookDisplay.html?id=${bookId}`
+      window.location.href = redirectURL;
+    }
 const booksPerPage = 10; // Set the number of books per page
 let currentPage = 1;
 let totalBooks = 0;
@@ -215,7 +220,7 @@ function generateBookHTML(book) {
       <p>Author: ${book.Author}</p>
       <p>Desciption: ${book.Book_description}</p>
       <p>Category: ${book.Genre}</p>
-      <p>Price: ${book.Price}</p>
+      <p>Price: $ ${book.Price}</p>
     </div>
   `;
 }

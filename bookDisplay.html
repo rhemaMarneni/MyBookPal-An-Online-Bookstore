@@ -6,6 +6,10 @@
     <title>MyBookPal</title>
     <link rel="stylesheet" href="listAllBooks.css" />
     <link rel="stylesheet" href="productStyle.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
   </head>
   <body>
     <header>
@@ -24,9 +28,9 @@
         </ul>
       </nav>
       <ul class="user-menu">
-        <li><a href="#account" class="account-icon">My Account</a></li>
-        <li><a href="#wishlist" class="wishlist-icon">Wishlist</a></li>
-        <li><a href="#cart" class="cart-icon">Cart</a></li>
+        <li><a href="#account" class="account-icon"><i class="fa fa-user" style="padding:3px;"></i>My Account</a></li>
+        <li><a href="#wishlist" class="wishlist-icon"><i class="fa fa-heart" style="padding:3px;"></i>Wishlist</a></li>
+        <li><a href="#cart" class="cart-icon"><i class="fa fa-opencart" style="padding:3px;"></i>Cart</a></li>
       </ul>
     </header>
     <div class="search-bar">
@@ -79,7 +83,7 @@
 
         try {
           const response = await fetch(
-            `http://127.0.0.1:8081/book?id=${bookId}`
+            `http://127.0.0.1:3000/displaybook?id=${bookId}`
           );
 
           if (!response.ok) { //response 200
@@ -98,7 +102,7 @@
             );
             const picElement = document.getElementById("pic");
             // Set the src attribute with the image URL from the data
-            picElement.src = bookDetails.Photos;
+            picElement.src = './assets/'+bookDetails.Photos;
             picElement.alt = `Book Image: ${bookDetails.Title}`;
 
             const titleElement = bookDetailsContainer.querySelector(".title");

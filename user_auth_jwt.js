@@ -16,14 +16,14 @@ const jwt = require('jsonwebtoken');
 
 let user_id = 0;
 
-// Connect to the database
-db.connect((err) => {
-   if (err) {
-       console.error('MySQL Connection Error: ' + err.stack);
-       return;
-   }
-   console.log('Connected to MySQL database');
-});
+// // Connect to the database
+// connection.connect((err) => {
+//    if (err) {
+//        console.error('MySQL Connection Error: ' + err.stack);
+//        return;
+//    }
+//    console.log('Connected to MySQL database');
+// });
 
 
 // JWT Secret Key
@@ -188,7 +188,7 @@ function serveFile(filePath, contentType, res) {
 //  });
  
 
- function handleLogin(req, res) {
+ function handleLogin(req, res, db) {
     let body = '';
  
  
@@ -228,7 +228,7 @@ function serveFile(filePath, contentType, res) {
     return JSON.stringify(result, null, 2);
 }
 
- function handleRegister(req, res) {
+ function handleRegister(req, res, db) {
     // ... [registration logic]
     let data = '';
     req.on('data', (chunk) => {
@@ -237,20 +237,26 @@ function serveFile(filePath, contentType, res) {
     // console.log('entries :', req, res);
  
     req.on('end', () => {
-        console.log("CHECK::",data);
-        const formData = parseUrlEncodedData(data);
+        // console.log("CHECK:",data);
+        const formData_temp = parseUrlEncodedData(data);
+        // console.log('--------------------------------');
         // const formData = JSON.parse(data);
-        console.log("Data :",formData);
+        // console.log("Form Data :",typeof formData_temp);
+        formData = JSON.parse(formData_temp);
+        
+        // console.log("Form Type :",typeof formData);
+        // console.log("Form Data :",formData);
+        // formData = JSON.parse(formData);
         // const username = formData.userid;
         const password = formData.password;
-        const firstName = formData.first_name;
-        const lastName = formData.last_name;
-        const usertype = formData.user_type;
+        const firstName = formData.firstName;
+        const lastName = formData.lastName;
+        const usertype = 'customer';
         const email = formData.email;
         const address = formData.address;
         const phone = formData.phone;
  
-        console.log("phone datatype: ",phone);
+        // console.log("phone datatype: ",phone);
         // Validate phone number length
         // const maxPhoneLength = 20; // This should match the length defined in your DB
         // if (phone.length > maxPhoneLength) {
@@ -261,7 +267,7 @@ function serveFile(filePath, contentType, res) {
  
  
         // Check if the username already exists in the database
-        const usernameCheckQuery = 'SELECT UserID FROM CUSTOMER WHERE UserID = ?';
+        const usernameCheckQuery = 'SELECT Email FROM CUSTOMER WHERE Email = ?';
         db.query(usernameCheckQuery, [email], (err, results) => {
             if (err) {
                 console.log("Error checking username", err);
@@ -272,8 +278,8 @@ function serveFile(filePath, contentType, res) {
                 res.end('User already exists');
             } else {
                 // Insert the new user into the database
-                const insertQuery = 'INSERT INTO CUSTOMER (FirstName, LastName, PhoneNumber, Email, UserAddress, UserPassword, UserType) VALUES (?, ?, ?, ?, ?, ?, ?)';
-                console.log("check query :", insertQuery);
+                const insertQuery = 'INSERT INTO CUSTOMER (FirstName, LastName, PhoneNumber, Email, UserAddress, UserPassword, UserType,UserCreatedAt,LastLogin,LastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?,NOW(),NOW(),NOW())';
+                // console.log("check query :", [firstName, lastName, phone, email, address, password, usertype]);
                 db.query(insertQuery, [firstName, lastName, phone, email, address, password, usertype], (err) => {
                     if (err) {
                         console.log("Error inserting new user", err);
@@ -282,6 +288,8 @@ function serveFile(filePath, contentType, res) {
                     } else {
                         res.writeHead(200, { 'Content-Type': 'text/plain' });
                         res.end('Registration Successful');
+                        // res.end("window.location.href = './login.html';")
+                        // window.location.href = './login.html';
                     }
                 });
             }
@@ -310,7 +318,7 @@ function getUserIDFromDatabase(userIdentifier) {
 
 
  // Function to handle updating a customer
- function handleUpdateCustomer(req, res, pathname) {
+ function handleUpdateCustomer(req, res, pathname, db) {
     // ... [update customer logic]
     const Username = pathname.split('/')[2];
     let data = '';
@@ -343,7 +351,7 @@ function getUserIDFromDatabase(userIdentifier) {
  
  
  // Function to handle getting all customers
- function handleGetAllCustomers(req, res) {
+ function handleGetAllCustomers(req, res, db) {
     // ... [get all customers logic]
     db.query('SELECT UserID, FirstName, LastName, PhoneNumber, Email, UserAddress, UserType FROM CUSTOMER', (err, rows) => {
         if (err) {
@@ -359,7 +367,7 @@ function getUserIDFromDatabase(userIdentifier) {
  
  
  // Function to handle getting a specific customer
- function handleGetCustomer(req, res, pathname) {
+ function handleGetCustomer(req, res, pathname, db) {
     // ... [get specific customer logic]
     console.log("Print all:",res);
     console.log("username check:", pathname);
@@ -380,7 +388,7 @@ function getUserIDFromDatabase(userIdentifier) {
  
  
  // Function to handle getting books based on filter criteria
- function handleGetBooks(req, res, pathname) {
+ function handleGetBooks(req, res, pathname, db) {
     // ... [get books logic]
     const queryParams = pathname.split('/')[2];
     try {
