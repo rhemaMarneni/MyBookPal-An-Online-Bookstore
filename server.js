@@ -217,7 +217,7 @@ const JWT_SECRET_KEY = 'TRaKtr75iER4atLU';
 
 const { listAvailableBooks, borrowBooks, returnBooks, borrowedBooks } = require('./bookLending.js');
 const { checkReservedBooks, newSubscription, cancelSubscription, getSubscriptions, 
-  getNotificationPreferences, updateNotificationPreferences } = require('./notificationRequests.js');
+  getNotificationPreferences, updateNotificationPreferences,fetchOutOfStockBooks  } = require('./notificationRequests.js');
 const { getAllBooks, searchBooks, orderBooks, filterBooks, getBook,
  newBook, updateBook, deleteBook, deleteAll, sortBooks } = require('./listAllBooksServer.js');
 const { viewUserCart, addBalancetoWallet, purchaseProduct, addToCart, viewPurchaseHistory,
@@ -227,10 +227,9 @@ const { handleRegister, handleUpdateCustomer, handleGetAllCustomers,
  handleGetCustomer, handleGetBooks, getUserIDFromDatabase } = require('./user_auth_jwt.js');
 const { createBookListing, GetBookListing, EditListing, handleGetAuctionHistoryRequest, 
   handleGetFilterAuctionsRequest, handleGetFilterListingsRequest, handlePutEditAuctionRequest,
-  handleDeleteListingRequest, handleDeleteAuctionRequest, handleRelistBookRequest,checkAndNotifyExpiredAuctions} = require('./sellerserver.js');
+  handleDeleteListingRequest, handleDeleteAuctionRequest, handleRelistBookRequest,checkAndNotifyExpiredAuctions,sellerbookdetails} = require('./sellerserver.js');
 const showBookDetails = require("./bookdetails.js");
 const handlers = require('./handler');
-
 //Create a connection to your MySQL database
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -287,6 +286,11 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
   if (req.method === 'GET' && reqUrl.pathname.startsWith('/books/availableLending')) {
     listAvailableBooks(connection, req, res)
   } else if (reqUrl.pathname.startsWith("/displaybook") && req.method === "GET") {
@@ -350,7 +354,9 @@ else if (pathname === '/register' && req.method === 'POST') {
   } else if (req.method === 'POST' && reqUrl.pathname === '/notifications/preferences') {
     updateNotificationPreferences(connection, req, res);
   } else if (req.method === 'GET' && req.url === '/books') {
-    getAllBooks(connection, req, res);
+  //  console.log(req);
+  getAllBooks(connection, req, res);
+    // verifyToken(req, res, () => getAllBooks(connection, req, res));
   } else if (req.method === 'GET' && req.url.startsWith('/books/search')) {
     searchBooks(connection, req, res);
   } else if (req.method === 'GET' && req.url.startsWith('/books/order')) {
@@ -383,13 +389,25 @@ else if (pathname === '/register' && req.method === 'POST') {
     deleteFromCart(connection, req, res);
   } else if (req.method === 'GET' && pathname.startsWith('/get-books/')) {
     handleGetBooks(connection, req, res, pathname);
-  } else if (req.method === "POST" && pathname.startsWith("/book")) {
-    createBookListing(req, res, params, body, contentType, connection);
-  } else if (req.method === "GET" && pathname.startsWith("/book/listing")) {
+  } 
+  else if (req.method === "PUT" && pathname.startsWith("/book/editlisting")) {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+    req.on("end", () => {EditListing(req, res, params, body, connection);  });
+  }
+  else if (req.method === "POST" && pathname.startsWith("/book")) {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+    req.on("end", () => {
+      createBookListing(req, res, params, body, "application/json", connection);
+    }); }
+   else if (req.method === "GET" && pathname.startsWith("/book/listing")) {
     GetBookListing(req, res, params, connection);
-  } else if (req.method === "PUT" && pathname.startsWith("/book/editlisting")) {
-    EditListing(req, res, params, body, connection);
-  } else if (req.method === "GET" && pathname.startsWith("/auctionhistory")) {
+  }  else if (req.method === "GET" && pathname.startsWith("/auctionhistory")) {
     handleGetAuctionHistoryRequest(req, res, params, connection);
   } else if (req.method === "GET" && pathname === "/book/filterauctions") {
     handleGetFilterAuctionsRequest(req, res, params, connection);
@@ -426,7 +444,14 @@ else if (pathname === '/register' && req.method === 'POST') {
   } else if (req.method === 'POST' && path === '/delete-notifications') {
     console.log("Inside 1");
     handlers.deleteNotifications(req, res);
-  } else {
+  }else if (req.method === 'GET' && req.url === '/OutOfStockBooks') {
+    fetchOutOfStockBooks(connection,req,res);
+  }
+  else if (req.method === "GET" && pathname.startsWith("/book") )  {
+
+    sellerbookdetails(req,res,params,connection)
+  } 
+  else {
     res.writeHead(404, {
       'Content-Type': 'text/plain'
     });
@@ -436,7 +461,7 @@ else if (pathname === '/register' && req.method === 'POST') {
 
 
 async function verifyToken(req, res, next) {
-    const bearerHeader = req.headers['authorization'];
+    const bearerHeader = req.headers['Authorization'];
     console.log('token:', bearerHeader);
     if (typeof bearerHeader !== 'undefined') {
         const token = bearerHeader.split(' ')[1];

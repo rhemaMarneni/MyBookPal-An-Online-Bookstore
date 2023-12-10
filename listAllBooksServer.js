@@ -2,6 +2,7 @@ const http = require('http');
 const mysql = require('mysql2');
 
 function getAllBooks(connection, req, res){
+    // console.log('User ID:', req.user_id);
     const selectQuery = 'SELECT * FROM BookListing'
     connection.query(selectQuery, (err, results) => {
       if (err) {

@@ -211,6 +211,8 @@ function redirectToAnotherPage(bookId) {
 const booksPerPage = 10; // Set the number of books per page
 let currentPage = 1;
 let totalBooks = 0;
+const token = localStorage.getItem('token');
+console.log('token:',token);
 
 function generateBookHTML(book) {
   return `
@@ -288,7 +290,7 @@ function fetchDataFromBackend() {
   }
 
   fetch(`${backendURL}${endpoint}`, {
-    method: 'GET',
+    method: 'GET'
   })
     .then(response => response.json())
     .then(data => {

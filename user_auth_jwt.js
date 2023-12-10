@@ -212,7 +212,7 @@ function serveFile(filePath, contentType, res) {
             // console.log("CHECK::",err);
             const token = jwt.sign({ emailid }, JWT_SECRET_KEY, { expiresIn: '24h' });
             console.log("token :", token);
-            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.writeHead(302, { 'Location': 'http://localhost:3000/books' });
             res.end(JSON.stringify({ token }));
         });
     });
@@ -286,7 +286,7 @@ function serveFile(filePath, contentType, res) {
                         res.writeHead(500, { 'Content-Type': 'text/plain' });
                         res.end('Registration Failed');
                     } else {
-                        res.writeHead(200, { 'Content-Type': 'text/plain' });
+                        res.writeHead(302, { 'Location': 'http://localhost:3000/' });
                         res.end('Registration Successful');
                         // res.end("window.location.href = './login.html';")
                         // window.location.href = './login.html';

@@ -88,7 +88,9 @@ function handleLogin() {
                 } else {
                     console.log(data.token);
                     // Show a suitable alert message
-                    alert('Subscription successful. We will notify you when the book is available for purchase/lending through your preferred mode of notification');
+                    localStorage.setItem('token', data.token);  
+                    window.location.href = 'listAllBooks.html';
+                    // alert('Subscription successful. We will notify you when the book is available for purchase/lending through your preferred mode of notification');
                 }
             })
             .catch(error => {

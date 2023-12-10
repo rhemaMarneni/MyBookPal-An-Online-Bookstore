@@ -178,7 +178,7 @@
       async function displayBookDetails() {
         const backendURL = "http://127.0.0.1:3000";
         const urlParams = new URLSearchParams(window.location.search);
-        const id = 3; //urlParams.get("id");
+        const id = 1; //urlParams.get("id");
 
         const filterCheckboxes = document.querySelectorAll('.filter-btn input:checked');
         const selectedFilters = Array.from(filterCheckboxes).map(checkbox => checkbox.name);

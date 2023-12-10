@@ -30,7 +30,7 @@ function isKeyCodeValid(providedKeyCode, lendingResults) {
 
 function listAvailableBooks(connection, req, res) {
   const query = 'SELECT * FROM BookListing WHERE Book_condition = ? AND Quantity > 0';
-  connection.query(query, ['old'], (err, results) => {
+  connection.query(query, ['used'], (err, results) => {
     if (err) {
       console.error('Error querying the database: ' + err);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -45,7 +45,7 @@ function listAvailableBooks(connection, req, res) {
 function borrowBooks(connection, req, res, Title) {
   connection.query(
     'SELECT * FROM BookListing WHERE Title = ? AND Book_condition = ? AND Quantity > 0',
-    [Title, 'old'],
+    [Title, 'used'],
     (err, results) => {
       if (err) {
         console.error('Error querying the database: ' + err);
@@ -106,7 +106,7 @@ function returnBooks(connection, req, res, Title) {
   // Check if the book with the given BookID exists and is currently lent
   connection.query(
     'SELECT * FROM BookLending WHERE BookID = (SELECT BookID FROM BookListing WHERE Title = ? AND Book_Condition = ?) AND LendingStartDate <= CURDATE() AND BorrowerUserID = 1',
-    [Title, 'old'],
+    [Title, 'used'],
     async (err, lendingResults) => {
       if (err) {
         console.error('Error querying the BookLending table: ' + err);

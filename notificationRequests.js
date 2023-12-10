@@ -243,11 +243,25 @@ function updateNotificationPreferences(db, req, res){
   });
 }
 
+function fetchOutOfStockBooks(db, req, res){
+  const selectQuery = 'SELECT * FROM BookListing WHERE Quantity = 0';
+  db.query(selectQuery, (selectErr, selectResults) => {
+  if (selectErr) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Database error' }));
+  } else {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(selectResults));
+  }
+  });
+}
+
 module.exports = {
   checkReservedBooks,
   newSubscription,
   cancelSubscription,
   getSubscriptions,
   getNotificationPreferences,
-  updateNotificationPreferences
+  updateNotificationPreferences,
+  fetchOutOfStockBooks
 };
