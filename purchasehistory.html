@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyBookPal</title>
+    <link rel="stylesheet" href="cart.css" />
+</head>
+
+<body>
+    <header>
+        <div class="brand">MyBookPal</div>
+        <nav>
+            <ul class="nav-menu">
+                <li><a href="#books" class="books-icon">Books</a></li>
+                <li><a href="#ebooks" class="ebooks-icon">eBooks</a></li>
+                <li><a href="#audiobooks" class="audiobooks-icon">Audiobooks</a></li>
+                <li><a href="#bestsellers" class="bestsellers-icon">Bestsellers</a></li>
+                <li><a href="#comingsoon" class="comingsoon-icon">Coming Soon</a></li>
+                <li><a href="#giftcards" class="giftcards-icon">Gift Cards</a></li>
+                <li><a href="#membership" class="membership_icon">Memberships</a></li>
+            </ul>
+        </nav>
+        <ul class="user-menu">
+            <li><a href="#account" class="account-icon">My Account</a></li>
+            <li><a href="#wishlist" class="wishlist-icon">Wallet</a></li>
+            <li><a href="#cart" class="cart-icon">Cart</a></li>
+        </ul>
+    </header>
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search for books">
+        <button>Search</button>
+        <div class="order-filter">
+            <label for="orderBy">Sort By:</label>
+            <select id="orderBy">
+                <option value="lowToHigh">Low to High</option>
+                <option value="highToLow">High to Low</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="container">
+        <table id="cart">
+            <thead>
+                <tr>
+                    <th class="third">Book</th>
+                    <th class="second">Quantity</th>
+                    <th class="fourth">Amount</th>
+                    <th class="fifth">Date of Purchase</th>
+                    <th class="sixth">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody id="purchasehistory"></tbody>
+        </table>
+    </div>
+
+<script>
+    const serverURL = 'http://localhost:3000';
+    //  const userId = 3;
+     document.addEventListener("DOMContentLoaded", function () {
+        // Call the function to fetch and display purchase history
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get("id");
+    
+        if (userId) {
+            displayPurchaseHistory(userId);
+        } else {
+            // Handle the case where userId is not found in the URL parameters
+            console.error('User ID not found in URL parameters');
+        }
+    });
+
+    // Function to fetch and display purchase history
+    async function displayPurchaseHistory(userId) {
+        try {
+            // Fetch purchase history from the backend
+            const response = await fetch(`${serverURL}/purchase_history?id=${userId}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const purchaseHistory = await response.json();
+            const tbody = document.getElementById('purchasehistory');
+
+            // Clear existing content
+            tbody.innerHTML = '';
+
+            if (purchaseHistory.length > 0) {
+                // Iterate through the purchase history and create rows
+                for (const record of purchaseHistory) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${record.Title}</td>
+                        <td>${record.Quantity}</td>
+                        <td>${record.Amount}</td>
+                        <td>${record.PaymentDateTime}</td>
+                        <td>&nbsp;</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            } else {
+                // Display a message if there is no purchase history
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="5">No purchase history available</td>';
+                tbody.appendChild(tr);
+            }
+        } catch (error) {
+            console.error('Error fetching purchase history:', error);
+        }
+    }
+</script>
+
+</body>
+
+</html>

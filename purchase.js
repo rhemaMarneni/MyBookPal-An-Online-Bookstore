@@ -6,7 +6,6 @@ const stripe = require('stripe')('sk_test_51OHGwhI1Ek63lRaqSVzjrAYXeY7BqNxhGi2VO
 const success = "http://localhost:3000/success.html"
 // const cancel = "https://buy.stripe.com/test_aEU9Bg95L9Ot5c4bIK"
 
-
 //Function to update the products in the cart - called when user wants to add/delete the products in cart or when the user checksout the cart
 function updateCart(connection, book_id, user_id, action) {
   console.log(`Updating cart for book_id: ${book_id}, user_id: ${user_id}, action: ${action}`);
@@ -364,6 +363,9 @@ function purchaseProduct(connection, req, res) {
         .then((result) => {
           totalPurchaseValue += result.total_price; // Accumulate total purchase value
           return { UserID, BookID, Quantity, totalPrice: result.total_price }; // Include totalPrice in the resolved object
+        })
+        .catch((error) => {
+          throw { statusCode: error.statusCode, message: error.message };
         });
     });
 
@@ -403,6 +405,7 @@ function purchaseProduct(connection, req, res) {
   });
 }
 
+
 // Function called when the user wants to check his past purchase history
 function viewPurchaseHistory(connection, req, res) {
   if (req.method === 'GET' && req.url.startsWith('/purchase_history')) {
@@ -414,9 +417,10 @@ function viewPurchaseHistory(connection, req, res) {
       res.end('Invalid User ID');
       return;
     }
-
-    const selectQuery = 'SELECT * from PurchaseHistory where UserID = ?';
-
+    const selectQuery = `
+    SELECT BL.Title,P.Quantity, P.Amount, P.PaymentDateTime from PurchaseHistory P JOIN BookListing BL ON P.BookID = BL.BookID
+    WHERE P.UserID = ?
+  `;
     new Promise((resolve, reject) => {
       connection.query(selectQuery, [userId], (err, results) => {
         if (err) {
@@ -442,6 +446,23 @@ function viewPurchaseHistory(connection, req, res) {
         res.end('Internal Server Error');
       });
   }
+}
+
+function updateWalletBalance(connection, userId, amount) {
+  return new Promise((resolve, reject) => {
+    // Example query: UPDATE Wallet SET WalletBalance = WalletBalance + ? WHERE UserID = ?
+    const updateQuery = 'UPDATE Wallet SET WalletBalance = WalletBalance + ? WHERE UserID = ?';
+
+    connection.query(updateQuery, [amount, userId], (err, result) => {
+      if (err) {
+        console.error('Error updating wallet balance:', err);
+        reject(err);
+      } else {
+        console.log('Wallet balance updated successfully');
+        resolve(result);
+      }
+    });
+  });
 }
 
 function createCheckoutSession(userId, amount) {
@@ -475,7 +496,7 @@ function createCheckoutSession(userId, amount) {
 
 // Assuming userBalances is a global variable or defined in the outer scope
 const userBalances = {};
-function addBalancetoWallet(req, res) {
+function addBalancetoWallet(connection, req, res) {
   console.log('Received a request to add to the wallet');
   let requestBody = '';
 
@@ -510,18 +531,19 @@ function addBalancetoWallet(req, res) {
       res.end('Invalid user_id');
       return;
     }
-
-    userBalances[userId] = (userBalances[userId] || 0) + parseFloat(amount);
-
-    // Use the createCheckoutSession function with promises
-    createCheckoutSession(userId, amount)
+    // Use the updateWalletBalance function to update the user's wallet balance in the database
+    updateWalletBalance(connection, userId, parseFloat(amount))
+      .then(() => {
+        // Use the createCheckoutSession function with promises
+        return createCheckoutSession(userId, amount);
+      })
       .then((session) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ checkout_url: session.url }));
       })
       .catch((error) => {
-        console.error('Error creating Checkout Session:', error);
+        console.error('Error adding to wallet and creating Checkout Session:', error);
         res.statusCode = 500;
         res.end('Internal Server Error');
       });
@@ -531,51 +553,16 @@ function addBalancetoWallet(req, res) {
 function handleSuccess(req, res) {
   const sessionId = req.query.session_id;
 
-  const updateQuery = `
-    UPDATE Wallet 
-    SET WalletBalance = WalletBalance + ? 
-    WHERE UserID = ?
-  `;
-
   stripe.checkout.sessions
     .retrieve(sessionId)
     .then((session) => {
+      // Check if the session's payment status is 'paid'
       if (session.payment_status === 'paid') {
-        const userId = parseInt(session.client_reference_id);
-        const amount = session.amount_total / 100; 
-
-        if (isNaN(userId)) {
-          console.error('Invalid user ID:', session.client_reference_id);
-          res.status(400).send('Invalid user ID');
-          return;
-        }
-
-        console.log(`Updating wallet balance for user ${userId} with amount ${amount}`);
-
-        new Promise((resolve, reject) => {
-          connection.query(updateQuery, [amount, userId], (err, updateResult) => {
-            if (err) {
-              console.error('Error updating wallet balance:', err);
-              reject(err);
-              return;
-            }
-
-            resolve(updateResult);
-          });
-        })
-        .then((updateResult) => {
-          console.log('Database update result:', updateResult);
-          console.log(`Amount ${amount} added to the wallet for user ${userId}`);
-          // Redirect to the full URL of the success page
-          res.redirect('http://localhost:3000/success.html');
-        })
-        .catch((updateError) => {
-          console.error('Error updating wallet balance:', updateError);
-          res.status(500).send('Internal Server Error');
-        });
+        // Redirect to the success URL specified in the session
+        res.redirect(session.success_url);
       } else {
-        console.log(`Payment not successful for session ${sessionId}`);
-        res.redirect('http://localhost:3000/cancel.html');
+        // Redirect to the cancel URL specified in the session
+        res.redirect(session.cancel_url);
       }
     })
     .catch((error) => {
@@ -763,6 +750,61 @@ function deleteFromCart(connection, req, res) {
       res.statusCode = 200;
       res.writeHead(res.statusCode, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ message: 'Products deleted successfully' }));
+    }
+  })
+  .catch((error) => {
+    res.statusCode = 500;
+    res.writeHead(res.statusCode, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: 'Internal Server Error' }));
+  });
+}
+
+function deleteItemFromCart(connection, req, res) {
+  const queryParameters = new URLSearchParams(req.url.split('?')[1]);
+  const userId = queryParameters.get('userId');
+  const bookId = queryParameters.get('bookId');
+
+  // Validate userId and bookId
+  if (!userId || isNaN(userId) || !bookId || isNaN(bookId)) {
+    res.statusCode = 400; // Bad Request
+    res.end('Invalid User ID or Book ID');
+    return;
+  }
+
+  const deleteQuery = `
+    DELETE FROM Cart
+    WHERE UserID = ? AND BookID = ?
+  `;
+
+  new Promise((resolve, reject) => {
+    connection.query(deleteQuery, [userId, bookId], (error, result) => {
+      if (error) {
+        console.error('Error deleting the item from the cart:', error);
+        reject(error);
+        return;
+      }
+
+      if (result.affectedRows === 0) {
+        // No records found to delete
+        resolve({ message: 'No such item found in the cart for the user.' });
+      } else {
+        // Item deleted successfully
+        console.log(`Deleted item with BookID ${bookId} from the cart for user ${userId}`);
+        resolve(result);
+      }
+    });
+  })
+  .then((result) => {
+    if (result.message) {
+      // No records found case
+      res.statusCode = 404;
+      res.writeHead(res.statusCode, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: result.message }));
+    } else {
+      // Item deleted successfully
+      res.statusCode = 200;
+      res.writeHead(res.statusCode, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: 'Item deleted successfully' }));
     }
   })
   .catch((error) => {
@@ -977,7 +1019,81 @@ function placeBid(connection, req, res) {
   });
 }
 
+function getbookdetails(connection, req, res) {
+  const queryParameters = new URLSearchParams(req.url.split('?')[1]);
+  const bookid = queryParameters.get('id');
+  if (!bookid || isNaN(bookid)) {
+    res.statusCode = 400; // Bad Request
+    res.end('Invalid Book ID');
+    return;
+  }
+  const selectQuery = `
+    SELECT BookID, Title, Price FROM booklisting WHERE BookID = ?
+  `;
+  new Promise((resolve, reject) => {
+    connection.query(selectQuery, [bookid], (err, results) => {
+      if (err) {
+        console.error('Error querying the database: ' + err.stack);
+        reject(err);
+        return;
+      }
+      resolve(results);
+    });
+  })
+    .then((results) => {
+      if (results.length === 0) {
+        res.statusCode = 404;
+        res.end(`Book not found with ID ${bookid}`);
+      } else {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(results));
+      }
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+      res.statusCode = 500;
+      res.end('Internal Server Error for booklisting');
+    });
+ }
 
+ function fetchWalletBalance(connection, req, res) {
+    const queryParameters = new URLSearchParams(req.url.split('?')[1]);
+    const userId = queryParameters.get('id');
+
+    // Validate userId
+    if (!userId || isNaN(userId)) {
+      res.statusCode = 400;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Invalid User ID' }));
+      return;
+    }
+
+    const selectQuery = 'SELECT WalletBalance FROM wallet WHERE UserID = ?';
+
+    // Use a prepared statement to avoid SQL injection
+    connection.query(selectQuery, [userId], (err, results) => {
+      if (err) {
+        console.error('Error querying the database: ' + err.stack);
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'Internal Server Error' }));
+        return;
+      }
+
+      if (results.length === 0) {
+        res.statusCode = 404; // Not Found
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: `No wallet balance found for user ${userId}` }));
+      } else {
+        const walletBalance = results[0].WalletBalance;
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ balance: walletBalance }));
+      }
+    });
+}
+
+ 
 module.exports = {
     viewUserCart,
     viewPurchaseHistory,
@@ -985,5 +1101,8 @@ module.exports = {
     addToCart,
     addBalancetoWallet,
     purchaseProduct,
-    placeBid
+    placeBid,
+    getbookdetails,
+    fetchWalletBalance,
+    deleteItemFromCart
 }
