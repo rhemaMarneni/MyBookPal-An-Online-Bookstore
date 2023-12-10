@@ -1655,4 +1655,3 @@ function handleDeleteListingRequest(req, res, params, connection) {
     checkAndNotifyExpiredAuctions,
     sellerbookdetails
   }
-
