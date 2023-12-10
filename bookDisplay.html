@@ -67,7 +67,7 @@
           <p class="genre text"><strong>Genre:&nbsp;</strong></p>
           <p class="desc text"><strong>Description:&nbsp;</strong></p>
           <p class="quantity text"><strong>Available Copies:&nbsp;</strong></p>
-          <button class="buy-bid" onclick="handleButtonClick()">Purchase</button>
+          <button class="buy-bid" onclick="handleButtonClick()">Add To Cart</button>
         </div>
       </div>
     </div>
@@ -79,7 +79,7 @@
 
       function handleButtonClick() {
         var button = document.querySelector(".buy-bid");
-        if (button.textContent.trim() === "Purchase") {
+        if (button.textContent.trim() === "Add To Cart") {
         // Call AddToCart function
           AddToCart();
         }
