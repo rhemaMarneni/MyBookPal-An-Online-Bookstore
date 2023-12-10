@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bree+Serif&family=Lato&family=Lora&family=Roboto&family=Trocchi&display=swap');
+
 .btn,
 .create-btn {
   background-color: #004d99;
@@ -107,6 +109,33 @@ table td:nth-child(2) {
     display: flex; justify-content: center; margin: 10px;
 }
 
+/* .book-container{
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex-direction: column;
+} */
+
+#listing-header{
+    text-align: center;
+    letter-spacing: 1px;
+    font-family: "Roboto Mono", monospace;
+    font-size: 28px;
+}
+
+.book-list{
+    padding: 40px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    cursor: pointer;
+}
+
+.book{
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+	border-radius: 4px;
+}
 
 /* Responsive styles for smaller screens */
 @media (max-width: 768px) {
