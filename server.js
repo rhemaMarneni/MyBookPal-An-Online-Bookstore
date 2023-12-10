@@ -19,70 +19,14 @@ const { createBookListing, GetBookListing, EditListing, handleGetAuctionHistoryR
   handleGetFilterAuctionsRequest, handleGetFilterListingsRequest, handlePutEditAuctionRequest,
   handleDeleteListingRequest, handleDeleteAuctionRequest, handleRelistBookRequest,checkAndNotifyExpiredAuctions} = require('./sellerserver.js');
 const showBookDetails = require("./bookdetails.js");
-const {
-  listAvailableBooks,
-  borrowBooks,
-  returnBooks,
-  borrowedBooks
-} = require('./bookLending.js');
-const {
-  checkReservedBooks,
-  newSubscription,
-  cancelSubscription,
-  getSubscriptions,
-  getNotificationPreferences,
-  updateNotificationPreferences
-} = require('./notificationRequests.js');
-const {
-  getAllBooks,
-  searchBooks,
-  orderBooks,
-  filterBooks,
-  getBook,
-  newBook,
-  updateBook,
-  deleteBook,
-  deleteAll,
-  sortBooks
-} = require('./listAllBooksServer.js');
-const {
-  viewUserCart,
-  addBalancetoWallet,
-  purchaseProduct,
-  addToCart,
-  viewPurchaseHistory,
-  deleteFromCart
-} = require('./purchase.js');
-const {
-  handleLogin,
-  handleRegister,
-  handleUpdateCustomer,
-  handleGetAllCustomers,
-  handleGetCustomer,
-  handleGetBooks
-} = require('./user_auth.js');
-const {
-  createBookListing,
-  GetBookListing,
-  EditListing,
-  handleGetAuctionHistoryRequest,
-  handleGetFilterAuctionsRequest,
-  handleGetFilterListingsRequest,
-  handlePutEditAuctionRequest,
-  handleDeleteListingRequest,
-  handleDeleteAuctionRequest,
-  handleRelistBookRequest,
-  checkAndNotifyExpiredAuctions
-} = require('./sellerserver.js');
-
 const handlers = require('./handler');
 
 //Create a connection to your MySQL database
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'root',
-  database: 'project'
+  password: 'password',
+  database: 'libraryManagement',
 });
 
 // Connect to the database
