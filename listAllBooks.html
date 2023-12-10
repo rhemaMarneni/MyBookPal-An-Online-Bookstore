@@ -7,36 +7,65 @@
     <title>MyBookPal</title>
     <script src="listAllBooks.js"></script>
     <link rel="stylesheet" href="listAllBooks.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+
   </head>
   <body>
     <header>
       <div class="brand">MyBookPal</div>
       <nav>
         <ul class="nav-menu">
-          <li><a href="#books" class="books-icon">Books</a></li>
-          <li><a href="#ebooks" class="ebooks-icon">eBooks</a></li>
+          <li><a href="./listAllBooks.html" class="books-icon">Books</a></li>
+          <!-- <li><a href="#ebooks" class="ebooks-icon"></a></li>
           <li><a href="#audiobooks" class="audiobooks-icon">Audiobooks</a></li>
-          <li>
-            <a href="#bestsellers" class="bestsellers-icon">Bestsellers</a>
-          </li>
-          <li><a href="#comingsoon" class="comingsoon-icon">Coming Soon</a></li>
-          <li><a href="#giftcards" class="giftcards-icon">Gift Cards</a></li>
-          <li><a href="#membership" class="membership_icon">Memberships</a></li>
-          <li><a href="./public/index.html" class="membership_icon">Shash-TH</a></li>
+          <li><a href="#bestsellers" class="bestsellers-icon">Bestsellers</a></li>
+          <li><a href="#comingsoon" class="comingsoon-icon">Coming Soon</a></li> -->
+          <li class="dropdown">
+            <a href="#" class="bookLending-icon">BookLending</a>
+            <div class="dropdown-content">
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Borrow a book</a>
+                <a href="#returnBook.html" id="returnBookOption">Return a book</a>
+                <a href="#MyBorrowedBooks.html" id="myBorrowedBooksOption">My borrowed books</a>
+            </div>
+        </li>
+        <li><a href="./listAllBooks.html" class="books-icon">Selling Books</a></li>
+        <li class="dropdown">
+          <a href="#" class="bookLending-icon">Subscriptions</a>
+          <div class="dropdown-content">
+              <a href="#subscribeBook.html" id="borrowBookOption">Subscribe to a book</a>
+              <a href="#unsubscribeBook.html" id="returnBookOption">Unsubscribe</a>
+          </div>
+        </li>
+        <li><a href="#Wallet" class="Wallet_icon">Wallet</a></li>
+        <li><a href="#cart" class="cart-icon"><i class="fa fa-opencart" style="padding:3px;"></i>Cart</a></li>
+        <li><a href="./public/index.html">Contact Us</a></li>
         </ul>
       </nav>
-      <ul class="user-menu">
-        <li class="home-button"><a href="listAllBooks.html" class="home-icon">Home</a></li>
-        <li><a href="#account" class="account-icon">My Account</a></li>
-        <li><a href="#wishlist" class="wishlist-icon">Wishlist</a></li>
-        <li><a href="#cart" class="cart-icon">Cart</a></li>
+        <ul class="user-menu">
+          <!-- <li class="home-button"><a href="listAllBooks.html" class="home-icon">Home</a></li> -->
+          
+          <li class="dropdown">
+            <a href="#account" class="account-icon"><i class="fa fa-user" style="padding:3px;"></i>My Account</a>
+            <div class="dropdown-content">
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Update Account</a>
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Settings</a>
+                <a href="./public/index.html" id="borrowBookOption">Contact Us</a>
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Logout</a>
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Sign In</a
+            </div>
+          </li>
+          
+          
       </ul>
     </header>
+
     <div class="search-bar">
       <input type="text" id="searchInput" placeholder="Search for books">
-      <button>Search</button>
-      
+      <button><i class="fa fa-search"> </i></button>
+      <button><a style="color: aliceblue;" href="./listAllBooks.html"><i class="fa fa-refresh"> </i></a></button>
     </div>
+    
     <div class="container">
       <form>
         <div class="filter-container">
@@ -115,178 +144,15 @@
         
       </form>
 
-      <div class="book-list" id="book-list">
-      </div>
-    </div>
-    <div id="bookdetails"></div>
+      <div class="book-list" id="book-list"></div>
 
-    <script type="module">
-
-//       function redirectToAnotherPage(bookId) {
-//         console.log(bookId)
-//         redirectURL = `bookDisplay.html?id=${bookId}`
-//         window.location.href = redirectURL;
-//       }
       
-//   function generateBookHTML(book) {
-//   return `
-//     <div class="book"  id="book${book.BookID}" data-category="${book.Genre}" onclick= "redirectToAnotherPage(${book.BookID})">
-//       <img src="./assets/${book.Photos}" alt="${book.Title}" />
-//       <h3>${book.Title}</h3>
-//       <p>Author: ${book.Author}</p>
-//       <p>Desciption: ${book.Book_description}</p>
-//       <p>Category: ${book.Genre}</p>
-//       <p>Price: ${book.Price}</p>
-//     </div>
-//   `;
-// }
+    </div>
+    <div id="paginationButtons">
+      <button id="previousPageButton" onclick="previousPage()">Previous Page</button>
+      <button id="nextPageButton" onclick="nextPage()">Next Page</button>
+    </div>
+    <!-- <div id="bookdetails"></div> -->
 
-//   function fetchDataFromBackend() {
-//   const backendURL = 'http://localhost:3000';
-//   const bookListContainer = document.getElementById('book-list');
-//   bookListContainer.innerHTML = '';
-
-//   const keyword = document.getElementById('searchInput').value.trim();
-//   const filterCheckboxes = document.querySelectorAll('.filter-btn input:checked');
-//   const priceCheckboxes = document.querySelectorAll('.price-btn input:checked');
-
-//   const selectedFilters = Array.from(filterCheckboxes).map(checkbox => checkbox.name);
-//   const selectedPrice = Array.from(priceCheckboxes).map(checkbox => checkbox.name)[0]; // Only allow one price checkbox to be checked
-//   const sortBy = document.getElementById('orderBy').value;
-
-//   let endpoint = '/books';
-//   let filteredData; // Declare filteredData outside the fetch block
-
-//   if (keyword !== '') {
-//     endpoint = `/books/search?keyword=${encodeURIComponent(keyword)}`;
-
-//     fetch(`${backendURL}${endpoint}`, {
-//       method: 'GET',
-//     })
-//       .then(response => response.json())
-//       .then(data => {
-//         if (Array.isArray(data)) {
-//           // console.log("Condition",selectedFilters.length > 0 || selectedPrice || sortBy);
-//           // console.log("sortBy",sortBy);
-//           if (sortBy === 'low-High') {
-//             data.sort((a, b) => a.Price - b.Price);
-//           } else if (sortBy === 'High-low') {
-//             data.sort((a, b) => b.Price - a.Price);
-//           }
-
-//           if (selectedFilters.length > 0 || selectedPrice) {
-//             // Filter data based on selected filters and price constraints
-            
-//             filteredData = data.filter(book => {
-//               const authorFilter = selectedFilters.includes(book.Author.toLowerCase());
-//               const genreFilter = selectedFilters.includes(book.Genre.toLowerCase());
-//               // console.log(selectedFilters,book.Genre.toLowerCase())
-//               const bookConditionFilter = selectedFilters.includes(book.Book_condition.toLowerCase());
-//               const priceFilter =
-//                 !selectedPrice ||
-//                 (selectedPrice === ">10" && book.Price > 10) ||
-//                 (selectedPrice === "<10" && book.Price < 10) ||
-//                 (selectedPrice === ">50" && book.Price > 50) ||
-//                 (selectedPrice === "<50" && book.Price < 50);
-//                 // console.log(selectedPrice,book.Price)
-
-//                 // console.log('A',authorFilter);
-//                 // console.log('BC ',bookConditionFilter);
-//                 // console.log('G',genreFilter);
-//                 // console.log('P',priceFilter);
-                
-              
-//                 if(selectedFilters.length > 0 && selectedPrice){
-//                   // console.log('Both');
-//                   return (authorFilter || bookConditionFilter || genreFilter) && priceFilter;
-//                 }
-//                 else if(selectedFilters.length>0){
-//                   // console.log('Filters');
-//                   return (authorFilter || bookConditionFilter || genreFilter);
-//                 }
-//                 else if(selectedPrice){
-//                   // console.log('Price');
-//                   return priceFilter;
-//                 }
-              
-//             });
-//             // console.log('Filtering',filteredData)
-//             // console.log('Sort By',sortBy)
-          
-//           filteredData.forEach(book => {
-//             const bookHTML = generateBookHTML(book);
-//             bookListContainer.innerHTML += bookHTML;
-//             console.log(book);
-//           });
-//         }else{
-//           data.forEach(book => {
-//             const bookHTML = generateBookHTML(book);
-//             bookListContainer.innerHTML += bookHTML;
-//           });
-//         }
-
-//         }
-//       })
-//       .catch(error => console.error('Error fetching data from backend:', error));
-//   } else {
-//     endpoint = '/books';
-
-//     if (selectedFilters.length > 0) {
-//       const featuresParam = selectedFilters.join(',');
-//       endpoint = `/books/filter?features=${featuresParam}`;
-//     }
-
-//     if (selectedPrice) {
-//       if(selectedFilters.length > 0) {
-//       endpoint += `&price=${(selectedPrice)}`;
-//       }
-//       else{
-//         endpoint+= `/order?price=${selectedPrice}`;
-//       }
-//     }
-//     else{
-//       if(selectedFilters.length > 0) {
-//       endpoint += `&price=>0`;
-//       }
-//     }
-
-//     if(sortBy){
-//       if(selectedFilters.length>0|| selectedPrice) {
-//       endpoint += `,order=${sortBy}`;
-//       }
-//       else{
-//         endpoint += `/sort?order=${sortBy}`;
-//       }
-
-//     }
-//     console.log(`${backendURL}${endpoint}`);
-
-//     fetch(`${backendURL}${endpoint}`, {
-//       method: 'GET',
-//     })
-//       .then(response => response.json())
-//       .then(data => {
-//         if (Array.isArray(data)) {
-//           data.forEach(book => {
-//             const bookHTML = generateBookHTML(book);
-//             bookListContainer.innerHTML += bookHTML;
-//           });
-//         }
-//       })
-//       .catch(error => console.error('Error fetching data from backend:', error));
-//     }
-
-//   }
-
-//   document.addEventListener('DOMContentLoaded', () => {
-//     fetchDataFromBackend();
-//     const searchButton = document.querySelector('button');
-//     searchButton.addEventListener('click', fetchDataFromBackend);
-
-//     const applyFilterButton = document.getElementById('apply-filter');
-//     applyFilterButton.addEventListener('click', fetchDataFromBackend);
-
-//   });
-    </script>
   </body>
 </html>
