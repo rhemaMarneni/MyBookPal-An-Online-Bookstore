@@ -6,6 +6,10 @@
     <title>MyBookPal</title>
     <link rel="stylesheet" href="listAllBooks.css" />
     <link rel="stylesheet" href="productStyle.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
   </head>
   <body>
     <header>
@@ -24,9 +28,9 @@
         </ul>
       </nav>
       <ul class="user-menu">
-        <li><a href="#account" class="account-icon">My Account</a></li>
-        <li><a href="#wishlist" class="wishlist-icon">Wishlist</a></li>
-        <li><a href="#cart" class="cart-icon">Cart</a></li>
+        <li><a href="#account" class="account-icon"><i class="fa fa-user" style="padding:3px;"></i>My Account</a></li>
+        <li><a href="#wishlist" class="wishlist-icon"><i class="fa fa-heart" style="padding:3px;"></i>Wishlist</a></li>
+        <li><a href="#cart" class="cart-icon"><i class="fa fa-opencart" style="padding:3px;"></i>Cart</a></li>
       </ul>
     </header>
     <div class="search-bar">
@@ -63,7 +67,7 @@
           <p class="genre text"><strong>Genre:&nbsp;</strong></p>
           <p class="desc text"><strong>Description:&nbsp;</strong></p>
           <p class="quantity text"><strong>Available Copies:&nbsp;</strong></p>
-          <button class="buy-bid">Purchase</button>
+          <button class="buy-bid" onclick="handleButtonClick()">Purchase</button>
         </div>
       </div>
     </div>
@@ -73,13 +77,67 @@
         displayBookDetails(); //display on page load
       });
 
+      function handleButtonClick() {
+        var button = document.querySelector(".buy-bid");
+        if (button.textContent.trim() === "Purchase") {
+        // Call AddToCart function
+          AddToCart();
+        }
+        // You can add additional logic for "Bid" case if needed
+      }
+
+      async function AddToCart(){
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookId = urlParams.get("id");
+        const userId = 1;
+
+        const requestBody = JSON.stringify({
+            "book_id": bookId,
+            "user_id": userId,
+            "quantity": 1
+        });
+        console.log("Request Body:", requestBody);
+        try{
+          const response = await fetch(`http://127.0.0.1:3000/add_cart`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: requestBody,
+        });
+        if (!response.ok) {
+            // Handle specific error messages from the backend
+            const responseData = await response.json();
+            if (responseData.error) {
+                // Alert for specific error messages
+                console.log(responseData);
+                alert(responseData.error);
+            } else {
+                // For unexpected errors, display a generic error message
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+        } else {
+            // If the purchase is successful, update the UI or perform any necessary actions
+            console.log('Purchase successful!');
+            // Optionally, you can clear the cart and update the displayed cart details
+            // displayCartDetails(userId);
+            redirectURL = `Sellerbook_display.html?id=${bookId}`;
+            window.location.href = redirectURL;
+        }
+        }
+        catch(error){
+          console.error('Error during purchase:', error);
+          alert('Error during purchase: Something went wrong. Please try again.');
+        }
+      }
+
       async function displayBookDetails() {
         const urlParams = new URLSearchParams(window.location.search);
         const bookId = urlParams.get("id");
 
         try {
           const response = await fetch(
-            `http://127.0.0.1:8081/book?id=${bookId}`
+            `http://127.0.0.1:3000/displaybook?id=${bookId}`
           );
 
           if (!response.ok) { //response 200
