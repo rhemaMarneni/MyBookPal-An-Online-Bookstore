@@ -220,9 +220,6 @@ const { checkReservedBooks, newSubscription, cancelSubscription, getSubscription
   getNotificationPreferences, updateNotificationPreferences,fetchOutOfStockBooks  } = require('./notificationRequests.js');
 const { getAllBooks, searchBooks, orderBooks, filterBooks, getBook,
  newBook, updateBook, deleteBook, deleteAll, sortBooks } = require('./listAllBooksServer.js');
-const { viewUserCart, addBalancetoWallet, purchaseProduct, addToCart, viewPurchaseHistory,
- deleteFromCart,
- placeBid} = require('./purchase.js');
 const { handleRegister, handleUpdateCustomer, handleGetAllCustomers, 
  handleGetCustomer, handleGetBooks, getUserIDFromDatabase } = require('./user_auth_jwt.js');
 const { createBookListing, GetBookListing, EditListing, handleGetAuctionHistoryRequest, 
@@ -230,6 +227,8 @@ const { createBookListing, GetBookListing, EditListing, handleGetAuctionHistoryR
   handleDeleteListingRequest, handleDeleteAuctionRequest, handleRelistBookRequest,checkAndNotifyExpiredAuctions,sellerbookdetails} = require('./sellerserver.js');
 const showBookDetails = require("./bookdetails.js");
 const handlers = require('./handler');
+const { viewUserCart, addBalancetoWallet, purchaseProduct, addToCart, viewPurchaseHistory,
+  deleteFromCart, getbookdetails, fetchWalletBalance, deleteItemFromCart, placeBid} = require('./purchase.js');
 //Create a connection to your MySQL database
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -286,12 +285,17 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
     return;
   }
-  if (req.method === 'GET' && reqUrl.pathname.startsWith('/books/availableLending')) {
+  if (req.method === 'GET' && (path.match('\.html$'))) {
+    const filePath = 'success.html';
+    serveStaticFiles(req, res, filePath);
+}
+  else if (req.method === 'GET' && reqUrl.pathname.startsWith('/books/availableLending')) {
     listAvailableBooks(connection, req, res)
   } else if (reqUrl.pathname.startsWith("/displaybook") && req.method === "GET") {
     showBookDetails(req,res,params, connection);
@@ -375,10 +379,20 @@ else if (pathname === '/register' && req.method === 'POST') {
     deleteBook(connection, req, res);
   } else if (req.method === 'DELETE' && req.url.startsWith('/all/')) {
     deleteAll(connection, req, res);
-  } else if (req.method === 'GET' && req.url.startsWith('/view_cart')) {
+  } 
+  else if (req.method === 'GET' && req.url.startsWith('/view_cart')) {
     viewUserCart(connection, req, res);
+  } else if (req.method === 'GET' && req.url.startsWith('/cart_value')) {
+    cartvalue(connection, req, res);
+  }
+  else if (req.method === 'GET' && req.url.startsWith('/get_book_details')) {
+    getbookdetails(connection, req, res);
   } else if (req.method === 'POST' && req.url.startsWith('/add_wallet_amount')) {
-    addBalancetoWallet(req, res);
+    addBalancetoWallet(connection, req, res);
+  } else if (req.method === 'GET' && req.url.startsWith('/wallet_balance')) {
+    fetchWalletBalance(connection, req, res);
+  }else if (req.method === 'DELETE' && req.url.startsWith('/delete_item_from_cart')) {
+    deleteItemFromCart(connection, req, res);
   } else if (req.method === 'POST' && req.url.startsWith('/purchase_product')) {
     purchaseProduct(connection, req, res);
   } else if (req.method === 'POST' && req.url.startsWith('/add_cart')) {
@@ -387,7 +401,8 @@ else if (pathname === '/register' && req.method === 'POST') {
     viewPurchaseHistory(connection, req, res);
   } else if (req.method === 'DELETE' && req.url.startsWith('/delete_from_cart')) {
     deleteFromCart(connection, req, res);
-  } else if (req.method === 'GET' && pathname.startsWith('/get-books/')) {
+  }
+  else if (req.method === 'GET' && pathname.startsWith('/get-books/')) {
     handleGetBooks(connection, req, res, pathname);
   } 
   else if (req.method === "PUT" && pathname.startsWith("/book/editlisting")) {
@@ -483,7 +498,23 @@ async function verifyToken(req, res, next) {
         res.end('Unauthorized');
     }
 }
+function serveStaticFiles(req, res, filePath) {
+  const fileExtension = path.extname(filePath);
+  const contentType = {
+    '.html': 'text/html',
+    '.js': 'text/javascript',
+  }[fileExtension] || 'text/plain';
 
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Internal Server Error');
+    } else {
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(data);
+    }
+  });
+}
 
 function handleLogin(req, res) {
     let body = '';

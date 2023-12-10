@@ -1095,14 +1095,14 @@ function getbookdetails(connection, req, res) {
 
  
 module.exports = {
-    viewUserCart,
-    viewPurchaseHistory,
-    deleteFromCart,
-    addToCart,
-    addBalancetoWallet,
-    purchaseProduct,
-    placeBid,
-    getbookdetails,
-    fetchWalletBalance,
-    deleteItemFromCart
+  viewUserCart,
+  viewPurchaseHistory,
+  deleteFromCart,
+  addToCart,
+  addBalancetoWallet,
+  purchaseProduct,
+  placeBid,
+  getbookdetails,
+  fetchWalletBalance,
+  deleteItemFromCart
 }
