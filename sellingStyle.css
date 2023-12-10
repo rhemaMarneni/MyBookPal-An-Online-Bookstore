@@ -1,0 +1,122 @@
+.btn,
+.create-btn {
+  background-color: #004d99;
+  padding: 8px 12px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  color: #fff;
+  font-weight: bold;
+}
+
+.btn:hover,
+.create-btn:hover{
+    background-color: #003366;
+  }
+
+.btn a {
+  text-decoration: none;
+  color: #fff;
+  font-weight: bold;
+}
+
+.create-btn{
+    font-size: 16px;
+    width: 150px;
+    height: 40px;
+    border-radius: 5px;
+    margin: 20px;
+}
+
+.main-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(227, 227, 227);
+}
+
+.create-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 90%;
+    background-color: #fff;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
+}
+
+#bookListingForm{
+    border-radius: 5px;
+    background-color: transparent;
+}
+
+#bookListingForm,
+#auctionFields{
+    display: flex;
+    flex-direction: column;
+}
+
+.create-container form{
+    display: flex;
+    justify-content: center;
+    width: 60rem;
+    height: auto;
+    padding: 20px;
+}
+
+.create-container select, 
+#auctionFields select,
+.create-container input, 
+#auctionFields input{
+    padding: 8px;
+    box-sizing: border-box;
+    width: 100%; 
+    margin-bottom: 10px;
+    max-width: 700px;
+}
+
+textarea {
+    width: 695px; 
+    height: 100px;
+}
+
+.row{
+    display: flex;
+    flex-direction: row;
+    justify-content:space-around;
+}
+
+table {
+    width: 100%;
+}
+
+#auctionFields table td:nth-child(1),
+table td:nth-child(1) {
+    width:30%;
+}
+
+#auctionFields table td:nth-child(2),
+table td:nth-child(2) {
+    width: 70%;
+}
+
+.createlisting-btn{
+    display: flex; justify-content: center; margin: 10px;
+}
+
+
+/* Responsive styles for smaller screens */
+@media (max-width: 768px) {
+    .create-container form {
+      width: 100%; 
+      padding: 10px; 
+    }
+  
+    table td:nth-child(1),
+    table td:nth-child(2) {
+      width: 100%;
+    }
+  }

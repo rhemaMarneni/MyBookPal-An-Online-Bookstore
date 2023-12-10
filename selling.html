@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyBookPal</title>
+    <link rel="stylesheet" href="listAllBooks.css" />
+    <link rel="stylesheet" href="sellingStyle.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <script src="listAllBooks.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand">MyBookPal</div>
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="./listAllBooks.html" class="books-icon">Books</a></li>
+          <!-- <li><a href="#ebooks" class="ebooks-icon"></a></li>
+          <li><a href="#audiobooks" class="audiobooks-icon">Audiobooks</a></li>
+          <li><a href="#bestsellers" class="bestsellers-icon">Bestsellers</a></li>
+          <li><a href="#comingsoon" class="comingsoon-icon">Coming Soon</a></li> -->
+          <li class="dropdown">
+            <a href="#" class="bookLending-icon">BookLending</a>
+            <div class="dropdown-content">
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Borrow a book</a>
+                <a href="#returnBook.html" id="returnBookOption">Return a book</a>
+                <a href="#MyBorrowedBooks.html" id="myBorrowedBooksOption">My borrowed books</a>
+            </div>
+        </li>
+        <li><a href="selling.html" class="books-icon">Selling Books</a></li>
+        <li class="dropdown">
+          <a href="#" class="bookLending-icon">Subscriptions</a>
+          <div class="dropdown-content">
+              <a href="#subscribeBook.html" id="borrowBookOption">Subscribe to a book</a>
+              <a href="#unsubscribeBook.html" id="returnBookOption">Unsubscribe</a>
+          </div>
+        </li>
+        <li><a href="#Wallet" class="Wallet_icon">Wallet</a></li>
+        <li><a href="#cart" class="cart-icon"><i class="fa fa-opencart" style="padding:3px;"></i>Cart</a></li>
+        <li><a href="./public/index.html">Contact Us</a></li>
+        </ul>
+      </nav>
+        <ul class="user-menu">
+          <!-- <li class="home-button"><a href="listAllBooks.html" class="home-icon">Home</a></li> -->
+          
+          <li class="dropdown">
+            <a href="#account" class="account-icon"><i class="fa fa-user" style="padding:3px;"></i>My Account</a>
+            <div class="dropdown-content">
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Update Account</a>
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Settings</a>
+                <a href="./public/index.html" id="borrowBookOption">Contact Us</a>
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Logout</a>
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Sign In</a>
+            </div>
+          </li>
+          
+          
+      </ul>
+    </header>
+    <div class="search-bar">
+      <input type="text" placeholder="Search for books" />
+      <button type="submit">Search</button>
+      <div class="order-filter">
+        <label for="orderBy">Sort By:</label>
+        <select id="orderBy">
+          <option value="lowToHigh">Low to High</option>
+          <option value="highToLow">High to Low</option>
+        </select>
+
+        <label for="priceFilter">Price:</label>
+        <select id="priceFilter">
+          <option value="greaterThan50">Greater than 50</option>
+          <option value="lessThan50">Less than 50</option>
+          <option value="greaterThan10">Greater than 10</option>
+          <option value="lessThan10">Less than 10</option>
+        </select>
+      </div>
+    </div>
+    <div class="container">
+      <form>
+        <div class="filter-container">
+          <button class="btn">
+            <a href="createlisting.html"
+              ><i class="fa fa-plus"></i>&nbsp;Create New Listing</a
+            >
+          </button>
+
+          <h2>Filter</h2>
+          <div class="showAuctions" style="margin-top: 15px">
+            <input
+              type="checkbox"
+              id="showAuctionsCheckbox"
+              onchange="displayBookDetails()"
+            />
+            <label for="showAuctionsCheckbox">Display Auctions</label>
+          </div>
+          <div class="filter-category">
+            <h3>Categories</h3>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="fiction" />
+              <label for="fiction">Fiction </label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="fantasy" />
+              <label for="fantasy">Fantasy </label>
+            </div>
+
+            <div class="filter-btn">
+              <input
+                type="checkbox"
+                class="filter-btn"
+                name="science fiction"
+              />
+              <label for="science fiction">Science Fiction </label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="romance" />
+              <label for="romance">Romance </label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="filter-btn" name="mystery" />
+              <label for="mystery">Mystery </label>
+            </div>
+          </div>
+          <button type="button" id="apply-filter">Apply Filters</button>
+
+          <div class="filter-condition">
+            <h3>Price</h3>
+            <div class="filter-btn">
+              <input type="checkbox" class="price-btn" name=">$10" />
+              <label for=">$10"> >$10 </label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="price-btn" name="<$10" />
+              <label for="<$10"> <$10 </label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="price-btn" name=">$50" />
+              <label for=">$50"> >$50 </label>
+            </div>
+
+            <div class="filter-btn">
+              <input type="checkbox" class="price-btn" name="<$50" />
+              <label for="<$50"> <$50 </label>
+            </div>
+          </div>
+          <button type="button" id="apply-price-range">
+            Apply Price Range
+          </button>
+          
+        </div>
+      </form>
+
+      <div class="book-container">
+        <h2 id="listing-header">YOUR LISTINGS</h2>
+        <div class="book-list">
+          <!-- Dynamic book listings will be added here by JavaScript -->
+        </div>
+      </div>
+    </div>
+    <div id="bookdetails"></div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        displayBookDetails(); // Display on page load
+      });
+
+      async function displayBookDetails() {
+        const backendURL = "http://127.0.0.1:3000";
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = 3; //urlParams.get("id");
+
+        const filterCheckboxes = document.querySelectorAll('.filter-btn input:checked');
+        const selectedFilters = Array.from(filterCheckboxes).map(checkbox => checkbox.name);
+        console.log(selectedFilters);
+        if (selectedFilters.length > 0) {
+          const featuresParam = selectedFilters.join(',');
+          endpoint = `/books/filter?features=${featuresParam}`;
+          console.log(endpoint);
+        }
+        else{
+          endpoint = `/book/listing?id=${id}`;
+        }              
+
+        const showAuctionsCheckbox = document.getElementById(
+          "showAuctionsCheckbox"
+        );
+
+        try {
+          const response = await fetch(`${backendURL}${endpoint}`);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          let data = await response.json();
+          console.log(data);
+
+          if (Array.isArray(data) && data.length > 0) {
+            if (showAuctionsCheckbox.checked) {
+              // Display only auction listings
+              data = data.filter((book) => book.Auction === 1);
+              console.log(data);
+            }
+            const bookListContainer = document.querySelector(".book-list");
+
+            // Clear existing content
+            bookListContainer.innerHTML = "";
+
+            // Iterate through the data and create book elements
+            data.forEach((book) => {
+              const bookElement = document.createElement("div");
+              bookElement.classList.add("book");
+              bookElement.setAttribute("data-category", book.category);
+              bookElement.onclick = function () {
+                redirectToAnotherPage(book.BookID);
+              };
+
+              const titleElement = document.createElement("h3");
+              const titleLink = document.createElement("a");
+              titleLink.href = `#book${book.BookID}`;
+              titleLink.textContent = book.Title;
+              titleElement.appendChild(titleLink);
+
+              const authorElement = document.createElement("p");
+              authorElement.textContent = `Author: ${book.Author}`;
+
+              const categoryElement = document.createElement("p");
+              categoryElement.textContent = `Category: ${book.Genre}`;
+
+              bookElement.appendChild(titleElement);
+              bookElement.appendChild(authorElement);
+              bookElement.appendChild(categoryElement);
+
+              bookListContainer.appendChild(bookElement);
+            });
+          } else {
+            console.log("No book listings available.");
+          }
+        } catch (error) {
+          console.error("Error fetching book details:", error.message);
+          alert("Error fetching book details. Please try again.");
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        displayBookDetails();
+        const applyFilterButton = document.getElementById("apply-filter");
+        applyFilterButton.addEventListener("click", displayBookDetails);
+      });
+      function redirectToAnotherPage(bookId) {
+        redirectURL = `Sellerbook_display.html?id=${bookId}`;
+        window.location.href = redirectURL;
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyBookPal</title>
+    <link rel="stylesheet" href="listAllBooks.css" />
+    <link rel="stylesheet" href="productStyle.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+        /* Add your custom styles here */
+        .edit, .delete, .history {
+          padding: 10px;
+          margin: 5px;
+          cursor: pointer;
+          border: none;
+          color: #fff;
+          border-radius: 5px;
+          font-size: 16px;
+          text-align: center;
+        }
+  
+        .edit {
+          background-color: #ffcc00; /* Green */
+        }
+  
+        .delete {
+          background-color: #f44336; /* Red */
+        }
+  
+        .history {
+          background-color: #004d99; /* Blue */
+        }
+        .details .title
+         {
+            margin-bottom: 0; /* Remove the bottom margin between title and author */
+            margin-top: 0; /* Add this line to remove the top margin above the title */
+        }
+        .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: 100px auto; /* Adjust this margin-top value as needed */
+  }
+  
+  .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    cursor: pointer;
+}
+.auction-history-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      .auction-history-table th,
+      .auction-history-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+
+      .auction-history-table th {
+        background-color: #f2f2f2;
+      }
+
+      .modal-content h2 {
+        text-align: center;
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      </style>
+    
+  </head>
+  <body>
+    <header>
+      <div class="brand">MyBookPal</div>
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="./listAllBooks.html" class="books-icon">Books</a></li>
+          <!-- <li><a href="#ebooks" class="ebooks-icon"></a></li>
+          <li><a href="#audiobooks" class="audiobooks-icon">Audiobooks</a></li>
+          <li><a href="#bestsellers" class="bestsellers-icon">Bestsellers</a></li>
+          <li><a href="#comingsoon" class="comingsoon-icon">Coming Soon</a></li> -->
+          <li class="dropdown">
+            <a href="#" class="bookLending-icon">BookLending</a>
+            <div class="dropdown-content">
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Borrow a book</a>
+                <a href="#returnBook.html" id="returnBookOption">Return a book</a>
+                <a href="#MyBorrowedBooks.html" id="myBorrowedBooksOption">My borrowed books</a>
+            </div>
+        </li>
+        <li><a href="selling.html" class="books-icon">Selling Books</a></li>
+        <li class="dropdown">
+          <a href="#" class="bookLending-icon">Subscriptions</a>
+          <div class="dropdown-content">
+              <a href="#subscribeBook.html" id="borrowBookOption">Subscribe to a book</a>
+              <a href="#unsubscribeBook.html" id="returnBookOption">Unsubscribe</a>
+          </div>
+        </li>
+        <li><a href="#Wallet" class="Wallet_icon">Wallet</a></li>
+        <li><a href="#cart" class="cart-icon"><i class="fa fa-opencart" style="padding:3px;"></i>Cart</a></li>
+        <li><a href="./public/index.html">Contact Us</a></li>
+        </ul>
+      </nav>
+        <ul class="user-menu">
+          <!-- <li class="home-button"><a href="listAllBooks.html" class="home-icon">Home</a></li> -->
+          
+          <li class="dropdown">
+            <a href="#account" class="account-icon"><i class="fa fa-user" style="padding:3px;"></i>My Account</a>
+            <div class="dropdown-content">
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Update Account</a>
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Settings</a>
+                <a href="./public/index.html" id="borrowBookOption">Contact Us</a>
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Logout</a>
+                <a href="#listAllLendingBooks.html" id="borrowBookOption">Sign In</a>
+            </div>
+          </li>
+          
+          
+      </ul>
+    </header>
+    <div class="search-bar">
+      <input type="text" placeholder="Search for books" />
+      <button type="submit">Search</button>
+      <div class="order-filter">
+        <label for="orderBy">Sort By:</label>
+        <select id="orderBy">
+          <option value="lowToHigh">Low to High</option>
+          <option value="highToLow">High to Low</option>
+        </select>
+
+        <label for="priceFilter">Price:</label>
+        <select id="priceFilter">
+          <option value="greaterThan50">Greater than 50</option>
+          <option value="lessThan50">Less than 50</option>
+          <option value="greaterThan10">Greater than 10</option>
+          <option value="lessThan10">Less than 10</option>
+        </select>
+      </div>
+    </div>
+    <div class="book-container">
+      <div class="product-container" id="bookDetailsContainer">
+        <img
+          src="https://img.kitapyurdu.com/v1/getImage/fn:11343251/wi:100/wh:true"
+          alt="Book Image"
+          id="pic"
+        />
+        <div class="details">
+          <p class="title">Book Title</p>
+          <p class="author">by <strong>Author</strong></p>
+          <h3 class="auction">12.99</h3>
+          <h3 class="price1">Price: $12.99</h3>
+          <h3 class = "price2"></h3>
+         
+          <button class="condition">Condition</button>
+          <p class="genre text"><strong>Genre:&nbsp;</strong></p>
+          <p class="desc text"><strong>Description:&nbsp;</strong></p>
+          <p class="quantity text"><strong>Available Copies:&nbsp;</strong></p>
+          <button class="edit" id = "editButton" onclick="editListing()">Edit</button>
+          <button class="edit" id = "relistButton" style="display: none;" onclick="relistListing()">Reslist</button>
+          <button class="delete" id ="deleteButton" onclick="deleteListing()">Delete Listing</button>
+          <button class="history" id="historyButton" onclick="openAuctionHistoryModal()" >View Auction History</button>
+
+
+        </div>
+      </div>
+    </div>
+    <div id="auctionHistoryModal" class="modal">
+        
+      </div>
+    <!-- <script src="sebookdetails.js"></script> -->
+    <script>
+        let bookId,sellerId;
+       let remainingTimeMessage = ""
+      document.addEventListener("DOMContentLoaded", function () {
+        displayBookDetails(); //display on page load
+      });
+
+      async function displayBookDetails() {
+        const urlParams = new URLSearchParams(window.location.search);
+        bookId = urlParams.get("id");
+
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:3000/book?id=${bookId}`
+          );
+
+          if (!response.ok) { //response 200
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          bookDetails = data
+          console.log("data is",data);
+
+
+          const now = new Date();
+const endDateTime = new Date(data.EndDateTime);
+const timeRemaining = endDateTime - now;
+
+// Convert milliseconds to seconds
+const secondsRemaining = Math.floor(timeRemaining / 1000);
+
+if (secondsRemaining > 0) {
+  const days = Math.floor(secondsRemaining / (24 * 3600));
+  const hours = Math.floor((secondsRemaining % (24 * 3600)) / 3600);
+  const minutes = Math.floor((secondsRemaining % 3600) / 60);
+  const seconds = secondsRemaining % 60;
+
+  remainingTimeMessage = `An auction is currently live for this book and ends in ${days} days, ${hours} hours, ${minutes} minutes, and ${seconds} seconds.`;
+  console.log("message", remainingTimeMessage);
+
+  // Update the DOM with the remaining time message
+  //const remainingTimeElement = document.getElementById("remainingTime");
+//   if (remainingTimeElement) {
+//     //remainingTimeElement.textContent = remainingTimeMessage;
+//   }
+} else {
+  // Auction has ended
+  //const remainingTimeElement = document.getElementById("remainingTime");
+//   if (remainingTimeElement) {
+//     remainingTimeElement.textContent = "Auction has ended.";
+//   }
+}
+
+          // Check if the data is an array and has at least one item
+          if (typeof data === "object" && Object.keys(data).length > 0) {
+            const bookDetails = data; // Access the first item in the array
+            //console.log(bookDetails)
+
+            const bookDetailsContainer = document.getElementById(
+              "bookDetailsContainer"
+            );
+            const picElement = document.getElementById("pic");
+            // Set the src attribute with the image URL from the data
+            picElement.src = bookDetails.Photos;
+            picElement.alt = `Book Image: ${bookDetails.Title}`;
+
+            const titleElement = bookDetailsContainer.querySelector(".title");
+            const authorElement = bookDetailsContainer.querySelector(".author");
+            const auctionElement = bookDetailsContainer.querySelector(".auction");
+            const priceElement1 = bookDetailsContainer.querySelector(".price1");
+            const priceElement2 = bookDetailsContainer.querySelector(".price2");
+            //const priceElement1 = bookDetailsContainer.querySelector(".price1");
+            const conditionElement =
+              bookDetailsContainer.querySelector(".condition");
+            const genreElement = bookDetailsContainer.querySelector(".genre");
+            const descElement = bookDetailsContainer.querySelector(".desc");
+            const quantityElement =
+              bookDetailsContainer.querySelector(".quantity");
+
+            picElement.innerHTML = bookDetails.Photos;
+            titleElement.textContent = bookDetails.Title;
+            authorElement.innerHTML = `<em>by</em> ${bookDetails.Author}`;
+            //auctionElement.innerHTML = `Auction`;
+            priceElement1.innerHTML = `Seller Price: $${bookDetails.Price}`;
+            priceElement2.innerHTML = `Current Bid: $${bookDetails.CurrentBid}`;
+            genreElement.innerHTML = `<strong>Genre:</strong> ${bookDetails.Genre}`;
+            descElement.innerHTML = `<strong>Description:</strong> ${bookDetails.Book_description}`;
+            quantityElement.innerHTML = `<strong>Available Copies:</strong> ${bookDetails.Quantity}`;
+
+            if(bookDetails.Auction){  //TODO: check if auction ended
+              if(bookDetails.AuctionStatus == 1){
+                const buyButton = bookDetailsContainer.querySelector(".edit")
+                buyButton.textContent = "edit"
+                const buyButton1 = bookDetailsContainer.querySelector(".delete")
+                buyButton1.textContent = "delete"
+                auctionElement.innerHTML = remainingTimeMessage;
+                auctionElement.style.color = "rgb(0, 100, 0)";
+                auctionElement.style.fontSize = "25px";
+              }
+              else if (bookDetails.AuctionStatus == 2){
+                const buyButton = bookDetailsContainer.querySelector(".edit")
+                buyButton.textContent = "edit"
+                const buyButton1 = bookDetailsContainer.querySelector(".delete")
+                buyButton1.textContent = "delete"
+                auctionElement.innerHTML = "The book has been successfully sold out.";
+                auctionElement.style.color = "rgb(0, 100, 0)";
+                auctionElement.style.fontSize = "25px";
+                document.getElementById("editButton").style.display = "none";
+                document.getElementById("deleteButton").style.display = "none";
+              }
+              else {
+                const buyButton = bookDetailsContainer.querySelector(".edit")
+                buyButton.textContent = "edit"
+                const buyButton1 = bookDetailsContainer.querySelector(".delete")
+                buyButton1.textContent = "delete"
+                auctionElement.innerHTML = "The time for the auction has been ended and no body purchased the book. You can relist if you wish to.";
+                auctionElement.style.color = "rgb(0, 100, 0)";
+                auctionElement.style.fontSize = "25px";
+                document.getElementById("editButton").style.display = "none";
+                document.getElementById("deleteButton").style.display = "none";
+                document.getElementById("relistButton").style.display = "inline-block";
+              }
+               
+            }
+            else{
+                auctionElement.innerHTML ='There is no live auction for this book.';
+                auctionElement.style.color = "rgb(0, 100, 100)";
+                auctionElement.style.fontSize = "25px";
+                document.getElementById("historyButton").style.display = "none";
+                priceElement2.style.display = "none";
+
+
+            }
+
+            if (bookDetails.Book_condition === "New") {
+              conditionElement.textContent = "New";
+              conditionElement.classList.add("new");
+            } else if (bookDetails.Book_condition === "Excellent") {
+              conditionElement.textContent = "Excellent";
+              conditionElement.classList.add("new");
+            }
+            else if (bookDetails.Book_condition === "Like New") {
+              conditionElement.textContent = "Like New";
+              conditionElement.classList.add("like-new");
+            } else if (bookDetails.Book_condition === "Used") {
+              conditionElement.textContent = "Used";
+              conditionElement.classList.add("used");
+            } else if (bookDetails.Book_condition === "Good") {
+              conditionElement.textContent = "Good";
+              conditionElement.classList.add("good");
+            } else {
+              conditionElement.textContent = "Condition";
+            }
+          } else {
+            throw new Error("Invalid data format received from the server");
+          }
+        } catch (error) {
+          console.error("Error fetching book details:", error.message);
+          alert("Error fetching book details. Please try again.");
+        }
+      }
+function editListing(){
+
+    // redirectURL = `createlisting.html?bookid=${bookId},sellerid=${sellerId}`;
+    //     window.location.href = redirectURL;
+
+        // const redirectURL = `createlisting.html?${new URLSearchParams(bookDetails).toString()}`;
+        // window.location.href = redirectURL;
+
+        console.log(bookDetails)
+
+        sellerId = 3
+
+  // Redirect to createlisting.html and pass bookId and sellerId as parameters
+  const redirectURL = `editlisting.html?bookid=${bookId}&sellerid=${sellerId}`;
+  window.location.href = redirectURL;
+}
+function relistListing(){
+  console.log(bookDetails)
+
+        sellerId = 3
+
+  // Redirect to createlisting.html and pass bookId and sellerId as parameters
+  const redirectURL = `editlisting.html?bookid=${bookId}&sellerid=${sellerId}`;
+  window.location.href = redirectURL;
+}
+ 
+      
+    function deleteListing() {
+  // Ask for confirmation before deleting
+  const confirmed = window.confirm('Are you sure you want to delete this listing?');
+
+  if (!confirmed) {
+    return; // Do nothing if not confirmed
+  }
+
+  console.log('Delete request sent');
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const bookid = urlParams.get('id');
+  const sellerid = 3;
+
+  // Use fetch to send DELETE request to the server
+  fetch(`http://127.0.0.1:3000/book/deletelisting?sellerid=${sellerid}&bookid=${bookid}`, {
+    method: 'DELETE',
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      // Handle success response from the server
+      console.log('Delete Listing response:', data);
+      // Show success message
+      alert('Listing deleted successfully.');
+      // Redirect to selling.html after successful deletion
+      window.location.href = 'selling.html';
+    })
+    .catch((error) => {
+      // Handle errors
+      console.error('Error deleting listing:', error.message);
+      alert('Error deleting listing. Please try again.');
+    });
+}
+// function openAuctionHistoryModal() {
+//     const modal = document.getElementById('auctionHistoryModal');
+//     modal.style.display = 'block';
+
+//     // Fetch and populate auction history content here
+//     // For demonstration purposes, let's create a simple content
+//     const modalContent = document.createElement('div');
+//     modalContent.classList.add('modal-content');
+
+//     const closeButton = document.createElement('span');
+//     closeButton.innerHTML = '&times;';
+//     closeButton.classList.add('close');
+//     closeButton.onclick = closeAuctionHistoryModal;
+
+//     const historyContent = document.createElement('p');
+//     historyContent.textContent = 'Auction history content goes here.';
+
+//     modalContent.appendChild(closeButton);
+//     modalContent.appendChild(historyContent);
+
+//     modal.innerHTML = ''; // Clear existing content
+//     modal.appendChild(modalContent);
+//     console.log("BookId is",bookId)
+
+
+
+//     try {
+//           const response = fetch(
+//             `http://127.0.0.1:3000/auctionhistory?bookid=${bookId}`
+//           );
+
+//           if (!response.ok) {
+//             throw new Error(`HTTP error! Status: ${response.status}`);
+//           }
+
+//           const data =  response.json();
+//           console.log("data is",data);
+
+         
+//         } catch (error) {
+//           console.error("Error fetching book details:", error.message);
+//           alert("Error fetching book details. Please try again.");
+//         }
+ 
+
+// }
+// async function openAuctionHistoryModal() {
+//     const modal = document.getElementById('auctionHistoryModal');
+//     modal.style.display = 'block';
+
+//     // Fetch and populate auction history content here
+//     // For demonstration purposes, let's create a simple content
+//     const modalContent = document.createElement('div');
+//     modalContent.classList.add('modal-content');
+
+//     const closeButton = document.createElement('span');
+//     closeButton.innerHTML = '&times;';
+//     closeButton.classList.add('close');
+//     closeButton.onclick = closeAuctionHistoryModal;
+
+//     const historyContent = document.createElement('p');
+    
+//     try {
+//         const response = await fetch(`http://127.0.0.1:3000/auctionhistory?bookid=${bookId}`);
+
+//         if (!response.ok) {
+//             throw new Error(`HTTP error! Status: ${response.status}`);
+//         }
+
+//         const data = await response.json();
+//         console.log("data is", data);
+
+//         // Update the historyContent with the fetched data
+//         historyContent.textContent = JSON.stringify(data);
+//     } catch (error) {
+//         console.error("Error fetching auction history:", error.message);
+//         alert("Error fetching auction history. Please try again.");
+//     }
+
+//     modalContent.appendChild(closeButton);
+//     modalContent.appendChild(historyContent);
+
+//     modal.innerHTML = ''; // Clear existing content
+//     modal.appendChild(modalContent);
+// }
+async function openAuctionHistoryModal() {
+    const modal = document.getElementById('auctionHistoryModal');
+    modal.style.display = 'block';
+
+    // Fetch and populate auction history content here
+    const modalContent = document.createElement('div');
+    modalContent.classList.add('modal-content');
+
+    const closeButton = document.createElement('span');
+    closeButton.innerHTML = '&times;';
+    closeButton.classList.add('close');
+    closeButton.onclick = closeAuctionHistoryModal;
+    const heading = document.createElement('h2');
+        heading.textContent = 'Auction History';
+
+        modalContent.appendChild(closeButton);
+        modalContent.appendChild(heading);
+    modalContent.appendChild(closeButton);
+
+    try {
+        const response = await fetch(`http://127.0.0.1:3000/auctionhistory?bookid=${bookId}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const auctionHistory = await response.json();
+        console.log(auctionHistory);
+        if (auctionHistory.length === 0) {
+            const noHistoryMessage = document.createElement('p');
+            noHistoryMessage.textContent = 'No auction history found for this book.';
+            modalContent.appendChild(noHistoryMessage);
+        } else {
+            // Create a table
+            const table = document.createElement('table');
+            table.classList.add('auction-history-table');
+
+            // Create table header
+            const headerRow = table.insertRow();
+            const headers = ['First Name', 'Last Name', 'Current Bid', 'Max Amount'];
+            headers.forEach((headerText) => {
+                const th = document.createElement('th');
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+
+            // Populate table rows with auction history data
+            auctionHistory.forEach((bid) => {
+                const row = table.insertRow();
+                const firstNameCell = row.insertCell(0);
+                const lastNameCell = row.insertCell(1);
+                const currentBidCell = row.insertCell(2);
+                const maxAmountCell = row.insertCell(3);
+
+                firstNameCell.textContent = bid.FirstName;
+                lastNameCell.textContent = bid.LastName;
+                currentBidCell.textContent = bid.PriceList[0]; // Assuming PriceList is a comma-separated list of prices
+                maxAmountCell.textContent = bid.MaxLimit;
+            });
+
+            // Append the table to the modal content
+            modalContent.appendChild(table);
+        }
+    } catch (error) {
+        console.error("Error fetching auction history:", error.message);
+        alert("Error fetching auction history. Please try again.");
+    }
+
+    modal.innerHTML = ''; // Clear existing content
+    modal.appendChild(modalContent);
+}
+
+
+   
+
+
+  function closeAuctionHistoryModal() {
+    const modal = document.getElementById('auctionHistoryModal');
+    modal.style.display = 'none';
+  }
+
+
+  
+    </script>
+  </body>
+</html>
