@@ -1,9 +1,10 @@
 const http = require('http');
 const url = require('url');
 const mysql = require('mysql2');
-const fs = require('fs');  // Add this line
-const path = require('path');  // Add this line
+const fs = require('fs'); // Add this line
+const path = require('path'); // Add this line
 const cron = require('node-cron');
+
 const { listAvailableBooks, borrowBooks, returnBooks, borrowedBooks } = require('./bookLending.js');
 const { checkReservedBooks, newSubscription, cancelSubscription, getSubscriptions, 
   getNotificationPreferences, updateNotificationPreferences } = require('./notificationRequests.js');
@@ -18,12 +19,70 @@ const { createBookListing, GetBookListing, EditListing, handleGetAuctionHistoryR
   handleGetFilterAuctionsRequest, handleGetFilterListingsRequest, handlePutEditAuctionRequest,
   handleDeleteListingRequest, handleDeleteAuctionRequest, handleRelistBookRequest,checkAndNotifyExpiredAuctions} = require('./sellerserver.js');
 const showBookDetails = require("./bookdetails.js");
+const {
+  listAvailableBooks,
+  borrowBooks,
+  returnBooks,
+  borrowedBooks
+} = require('./bookLending.js');
+const {
+  checkReservedBooks,
+  newSubscription,
+  cancelSubscription,
+  getSubscriptions,
+  getNotificationPreferences,
+  updateNotificationPreferences
+} = require('./notificationRequests.js');
+const {
+  getAllBooks,
+  searchBooks,
+  orderBooks,
+  filterBooks,
+  getBook,
+  newBook,
+  updateBook,
+  deleteBook,
+  deleteAll,
+  sortBooks
+} = require('./listAllBooksServer.js');
+const {
+  viewUserCart,
+  addBalancetoWallet,
+  purchaseProduct,
+  addToCart,
+  viewPurchaseHistory,
+  deleteFromCart
+} = require('./purchase.js');
+const {
+  handleLogin,
+  handleRegister,
+  handleUpdateCustomer,
+  handleGetAllCustomers,
+  handleGetCustomer,
+  handleGetBooks
+} = require('./user_auth.js');
+const {
+  createBookListing,
+  GetBookListing,
+  EditListing,
+  handleGetAuctionHistoryRequest,
+  handleGetFilterAuctionsRequest,
+  handleGetFilterListingsRequest,
+  handlePutEditAuctionRequest,
+  handleDeleteListingRequest,
+  handleDeleteAuctionRequest,
+  handleRelistBookRequest,
+  checkAndNotifyExpiredAuctions
+} = require('./sellerserver.js');
+
+const handlers = require('./handler');
+
 //Create a connection to your MySQL database
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'password',
-  database: 'libraryManagement'
+  password: 'root',
+  database: 'project'
 });
 
 // Connect to the database
@@ -48,10 +107,15 @@ setInterval(() => {
 
 const server = http.createServer((req, res) => {
   const reqUrl = url.parse(req.url, true);
-  const { pathname } = reqUrl;
+  const {
+    pathname
+  } = reqUrl;
   const qs = require("qs");
   const myparams = reqUrl.query || {};
   const params = qs.parse(myparams);
+  //Shashwenth
+  const parsedUrl = url.parse(req.url, true);
+  const path = parsedUrl.pathname;
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
@@ -68,9 +132,9 @@ const server = http.createServer((req, res) => {
     const queryParams = new URLSearchParams(reqUrl.query);
     const Title = queryParams.get('Title');
     returnBooks(connection, req, res, Title);
-  } else if (req.method === 'GET' && reqUrl.pathname === '/books/borrowed'){
+  } else if (req.method === 'GET' && reqUrl.pathname === '/books/borrowed') {
     borrowedBooks(connection, req, res);
-  } else if (req.method === 'POST' && reqUrl.pathname.startsWith('/books/subscribe')){
+  } else if (req.method === 'POST' && reqUrl.pathname.startsWith('/books/subscribe')) {
     const queryParams = new URLSearchParams(reqUrl.query);
     const Title = queryParams.get('Title');
     const Book_condition = queryParams.get('Book_condition');
@@ -87,18 +151,16 @@ const server = http.createServer((req, res) => {
   } else if (req.method === 'POST' && reqUrl.pathname === '/notifications/preferences') {
     updateNotificationPreferences(connection, req, res);
   } else if (req.method === 'GET' && req.url === '/books') {
-    getAllBooks(connection,req,res);
+    getAllBooks(connection, req, res);
   } else if (req.method === 'GET' && req.url.startsWith('/books/search')) {
     searchBooks(connection, req, res);
   } else if (req.method === 'GET' && req.url.startsWith('/books/order')) {
     orderBooks(connection, req, res);
   } else if (req.method === 'GET' && req.url.startsWith('/books/filter')) {
     filterBooks(connection, req, res);
-  } 
-  else if (req.method === 'GET' && req.url.startsWith('/books/sort')) {
+  } else if (req.method === 'GET' && req.url.startsWith('/books/sort')) {
     sortBooks(connection, req, res);
-  }
-  else if (req.method === 'GET' && req.url.startsWith('/books/')) {
+  } else if (req.method === 'GET' && req.url.startsWith('/books/')) {
     getBook(connection, req, res);
   } else if (req.method === 'POST' && req.url.startsWith('/books/')) {
     newBook(connection, req, res);
@@ -133,29 +195,52 @@ const server = http.createServer((req, res) => {
   } else if (req.method === 'GET' && pathname.startsWith('/get-books/')) {
     handleGetBooks(connection, req, res, pathname);
   } else if (req.method === "POST" && pathname.startsWith("/book")) {
-    createBookListing(req, res, params, body, contentType,connection);
+    createBookListing(req, res, params, body, contentType, connection);
   } else if (req.method === "GET" && pathname.startsWith("/book/listing")) {
-    GetBookListing(req, res, params,connection);
+    GetBookListing(req, res, params, connection);
   } else if (req.method === "PUT" && pathname.startsWith("/book/editlisting")) {
-    EditListing(req, res, params, body,connection);
+    EditListing(req, res, params, body, connection);
   } else if (req.method === "GET" && pathname.startsWith("/auctionhistory")) {
-    handleGetAuctionHistoryRequest(req, res, params,connection);
+    handleGetAuctionHistoryRequest(req, res, params, connection);
   } else if (req.method === "GET" && pathname === "/book/filterauctions") {
-    handleGetFilterAuctionsRequest(req, res, params,connection);
+    handleGetFilterAuctionsRequest(req, res, params, connection);
   } else if (req.method === "GET" && pathname === "/book/filterlistings") {
-    handleGetFilterListingsRequest(req, res, params,connection);
+    handleGetFilterListingsRequest(req, res, params, connection);
   } else if (req.method === "PUT" && pathname.startsWith("/book/editauction")) {
+
     handlePutEditAuctionRequest(req, res, params, body,connection);
   } else if (req.method === "POST" && pathname.startsWith("/book/placeBid")) {
     placeBid(connection, req, res);
+
   } else if (req.method === "DELETE" && pathname.startsWith("/book/deletelisting")) {
-    handleDeleteListingRequest(req, res, params,connection);
+    handleDeleteListingRequest(req, res, params, connection);
   } else if (req.method === "DELETE" && pathname.startsWith("/book/deleteauction")) {
-   handleDeleteAuctionRequest(req, res, params,connection);
+    handleDeleteAuctionRequest(req, res, params, connection);
   } else if (req.method === "PUT" && pathname.startsWith("/relist")) {
-   handleRelistBookRequest(req, res, params, body,connection);
+    handleRelistBookRequest(req, res, params, body, connection);
+  } //Shashwenth Code
+  else if (req.method === 'GET' && path === '/') {
+    handlers.serveIndex(req, res);
+  } else if (req.method === 'GET' && path.match('\.html$') || path.match('\.js$')) {
+    handlers.serveStaticFiles(req, res, path);
+  } else if (req.method === 'GET' && path.startsWith('/assets')) {
+    handlers.serveStaticFiles(req, res, path);
+  } else if (req.method === 'POST' && req.url === '/queries') {
+    handlers.postQueries(req, res);
+  } else if (req.method === 'GET' && path === '/notifications-CR') {
+    handlers.getNotifications(req, res);
+  } else if (req.method === 'GET' && path === '/view_history') {
+    handlers.getViewHistory(req, res);
+  } else if (req.method === 'POST' && path === '/submit-feedback') {
+    console.log("submission");
+    handlers.updatefeedback(req, res);
+  } else if (req.method === 'POST' && path === '/delete-notifications') {
+    console.log("Inside 1");
+    handlers.deleteNotifications(req, res);
   } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.writeHead(404, {
+      'Content-Type': 'text/plain'
+    });
     res.end('Not Found');
   }
 });
@@ -167,7 +252,7 @@ server.listen(port, () => {
 
 process.on('SIGINT', () => {
   connection.end((err) => {
-      if (err) console.error('Error closing the database connection:', err);
-      process.exit();
+    if (err) console.error('Error closing the database connection:', err);
+    process.exit();
   });
 });
