@@ -233,7 +233,7 @@ const { viewUserCart, addBalancetoWallet, purchaseProduct, addToCart, viewPurcha
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'password',
+  password: 'heythere',
   database: 'project',
 });
 
