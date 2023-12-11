@@ -74,6 +74,7 @@ exports.postQueries = (req,res)=>{
      });
      req.on('end', () => {
        const formData = querystring.parse(body);
+       
        const insertQuerySql = `INSERT INTO queries (userid, question) VALUES (${formData.userId}, "${formData.question}");`;
         console.log(insertQuerySql);
        // First, insert into 'queries'
@@ -85,6 +86,7 @@ exports.postQueries = (req,res)=>{
          } else {
            // Get the last insert id
            const lastId = result.insertId;
+           formData.userId = 1;
            const insertHistorySql = `INSERT INTO query_history (query_id, userid, question, status) VALUES (${lastId}, ${formData.userId}, "${formData.question}", "In Progress");`;
    
            // Then, insert into 'query_history'

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Modify User Details</title>
+    <link rel="stylesheet" href="./assets_rep/style.css" type="text/css">
+
+</head>
+<body>
+    <header>
+        <h1>Modify Customer Details</h1>
+    </header>
+    <form id="modifyUserForm">
+        <label for="userId">User ID:</label><br>
+        <input type="text" id="userId" name="userId" required readonly><br>
+
+        <label for="firstName">First Name:</label>
+        <input type="checkbox" id="editFirstName">
+        <input type="text" id="firstName" name="firstName" disabled><br>
+
+        <label for="lastName">Last Name:</label>
+        <input type="checkbox" id="editLastName">
+        <input type="text" id="lastName" name="lastName" disabled><br>
+
+        <label for="phoneNumber">Phone Number:</label>
+        <input type="checkbox" id="editPhoneNumber">
+        <input type="text" id="phoneNumber" name="phoneNumber" disabled><br>
+
+        <label for="email">Email:</label>
+        <input type="checkbox" id="editEmail">
+        <input type="email" id="email" name="email" disabled><br>
+
+        <label for="userAddress">Address:</label>
+        <input type="checkbox" id="editUserAddress">
+        <input type="text" id="userAddress" name="userAddress" disabled><br>
+
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        document.getElementById('modifyUserForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const userId = document.getElementById('userId').value;
+            const firstName = document.getElementById('editFirstName').checked ? document.getElementById('firstName').value : null;
+            const lastName = document.getElementById('editLastName').checked ? document.getElementById('lastName').value : null;
+            const phoneNumber = document.getElementById('editPhoneNumber').checked ? document.getElementById('phoneNumber').value : null;
+            const email = document.getElementById('editEmail').checked ? document.getElementById('email').value : null;
+            const userAddress = document.getElementById('editUserAddress').checked ? document.getElementById('userAddress').value : null;
+
+            // Construct the body of the request
+            let body = `userId=${encodeURIComponent(userId)}`;
+            if (firstName !== null) body += `&firstName=${encodeURIComponent(firstName)}`;
+            if (lastName !== null) body += `&lastName=${encodeURIComponent(lastName)}`;
+            if (phoneNumber !== null) body += `&phoneNumber=${encodeURIComponent(phoneNumber)}`;
+            if (email !== null) body += `&email=${encodeURIComponent(email)}`;
+            if (userAddress !== null) body += `&userAddress=${encodeURIComponent(userAddress)}`;
+            console.log(body);
+            const backendURL = 'http://localhost:3000';
+            fetch(`${backendURL}/update_user_details`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: body
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert('User details updated successfully!');
+                window.location.href = './view-customer-details.html'; // Redirect after submission
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Failed to update user details');
+            });
+        });
+
+        // Enable editing for checked fields
+        ['editFirstName', 'editLastName', 'editPhoneNumber', 'editEmail', 'editUserAddress'].forEach(id => {
+        document.getElementById(id).addEventListener('change', function() {
+            const inputId = this.id.replace('edit', '').charAt(0).toLowerCase() + this.id.replace('edit', '').slice(1);
+            document.getElementById(inputId).disabled = !this.checked;
+        });
+    });
+
+        window.onload = function() {
+            const currentUserId = JSON.parse(localStorage.getItem('currentQuery')).userId;
+            if (currentUserId) {
+                document.getElementById('userId').value = currentUserId;// Fetch and populate user details
+                const backendURL = 'http://localhost:3000';
+                fetch(`${backendURL}/get_user_details`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `userId=${encodeURIComponent(currentUserId)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data) {
+                        document.getElementById('firstName').value = data.firstName || '';
+                        document.getElementById('lastName').value = data.lastName || '';
+                        document.getElementById('phoneNumber').value = data.phoneNumber || '';
+                        document.getElementById('email').value = data.email || '';
+                        document.getElementById('userAddress').value = data.userAddress || '';
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+            }
+        };
+    </script>
+</body>
+</html>

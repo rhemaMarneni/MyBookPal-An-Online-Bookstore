@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Submit Notification</title>
+    <link rel="stylesheet" href="./assets_rep/style.css" type="text/css">
+</head>
+<body>
+    <header>
+        <h1>Resolve Query</h1>
+    </header>
+    <form id="notificationForm">
+        <label for="queryId">Query ID:</label><br>
+        <input type="text" id="queryId" name="queryId"><br>
+        <label for="UserId">User ID:</label><br>
+        <input type="text" id="UserId" name="UserId" required readonly><br>
+        <label for="question">Question:</label><br>
+        <textarea id="question" name="question" required readonly></textarea><br>
+        <label for="answer">Answer:</label><br>
+        <textarea id="answer" name="answer" required></textarea><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        document.getElementById('notificationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const cust_rep_id=1;
+            const queryId = document.getElementById('queryId').value;
+            const UserId = document.getElementById('UserId').value;
+            const question = document.getElementById('question').value;
+            const answer = document.getElementById('answer').value;
+
+            const backendURL = 'http://localhost:3000';
+            fetch(`${backendURL}/notifications`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `query_id=${encodeURIComponent(queryId)}&userId=${encodeURIComponent(UserId)}&question=${encodeURIComponent(question)}&answer=${encodeURIComponent(answer)}&cust_rep_id=${encodeURIComponent(cust_rep_id)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert('Notification submitted successfully!');
+                window.location.href = './view-queries.html'; // Redirect after submission
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Failed to submit notification');
+            });
+        });
+
+        window.onload = function() {
+            const currentQuery = JSON.parse(localStorage.getItem('currentQuery'));
+            if (currentQuery) {
+                document.getElementById('queryId').value = currentQuery.queryId;
+                document.getElementById('UserId').value = currentQuery.UserId;
+                document.getElementById('question').value = currentQuery.question;
+            }
+        };
+    </script>
+</body>
+</html>

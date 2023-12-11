@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View stats</title>
+    <link rel="stylesheet" href="./assets_rep/style.css" type="text/css">
+
+</head>
+<body>
+    <header>
+        <h1>Service Statistics and Queries</h1>
+    </header>
+    
+    <div id="statistics"></div>
+    <div id="queryTable"></div>
+
+    <script>
+        const backendURL = 'http://localhost:3000';
+        fetch(`${backendURL}/get_statistics_and_queries`)
+            .then(response => response.json())
+            .then(data => {
+                const statsContainer = document.getElementById('statistics');
+                const tableContainer = document.getElementById('queryTable');
+
+                // Display statistics
+                statsContainer.innerHTML = `
+                    <div class="statistics-container">
+                        <div class="statistic">Average Service Rating: ${data.stats.avg_serv_rating.toFixed(2)}</div>
+                        <div class="statistic">Average Time Rating: ${data.stats.avg_time_rating.toFixed(2)}</div>
+                        <div class="statistic">Solved Percentage: ${data.stats.solved_percentage.toFixed(2)}%</div>
+                    </div>
+                `;
+
+
+                // Display query table
+                const tableHtml = `
+                <h2 style="text-align: center;">Detailed Review</h2>
+                    <table>
+                        <tr>
+                            <th>Service Rating</th>
+                            <th>Time Rating</th>
+                            <th>Solved</th>
+                            <th>Feedback</th>
+                        </tr>
+                        ${data.queries.map(q => `
+                            <tr>
+                                <td>${q.serv_rating}</td>
+                                <td>${q.time_rating}</td>
+                                <td>${q.solved}</td>
+                                <td>${q.comment}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                `;
+                tableContainer.innerHTML = tableHtml;
+            })
+            .catch(error => {
+                console.log('No Performace Recorded.');
+                // Handle errors for both containers
+                document.getElementById('statistics').innerHTML = '<p>No Performace Recorded.</p>';
+                document.getElementById('queryTable').innerHTML = '<p>No Performace Recorded.</p>';
+            });
+    </script>
+</body>
+</html>

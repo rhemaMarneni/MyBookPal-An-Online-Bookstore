@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Pending Approvals</title>
+    <link rel="stylesheet" href="./assets_admin/style1.css" type="text/css">
+</head>
+<body>
+    <header><h1>View Pending Approvals</h1></header>
+    <div id="wait_approval"></div>
+    <div class="button-container">
+        <button onclick="submitApprovals()">Submit Approvals</button>
+    </div>
+
+    <script>
+        const backendURL = 'http://localhost:3000';
+        fetch(`${backendURL}/wait_approval`)
+            .then(response => response.json())
+            .then(data => {
+                const queriesContainer = document.getElementById('wait_approval');
+                if (data && data.length) {
+                    queriesContainer.innerHTML = '<ul>' + 
+                        data.map(query => 
+                            `<div class="notification-container">
+                                <div class="notification-content">
+                                    <p>Question: ${query.question}</p>
+                                    <p>Answer: ${query.answer}</p>
+                                    <!-- Any other content you want to include -->
+                                </div>
+                                <input type="checkbox" class="approve" data-a_id="${query.a_id}">
+                            </div>
+                            `
+                        ).join('') + 
+                        '</ul>';
+                } else {
+                    queriesContainer.innerHTML = '<p>No pending approvals found.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                queriesContainer.innerHTML = '<p>Error loading pending approvals.</p>';
+            });
+
+        function submitApprovals() {
+            const approvals = Array.from(document.querySelectorAll('.approve:checked')).map(cb => cb.getAttribute('data-a_id'));
+            const backendURL = 'http://localhost:3000';
+            fetch(`${backendURL}/process_approvals`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ approvals })
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert('Approvals processed successfully!');
+                window.location.reload(); // Reload to update the list
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to process approvals');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+header {
+    background-color: #0056b3;
+    color: white;
+    padding: 15px 0;
+    text-align: center;
+    font-size: 24px;
+}
+
+/* Notification Container Styles */
+#notifications .notification {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Button Styles */
+.feedback-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.feedback-button:hover {
+    background-color: #0056b3;
+}
+
+/* Delete Notifications Button */
+#deleteNotificationsForm input[type="submit"] {
+    background-color: #dc3545;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+    width: auto;
+}
+
+#deleteNotificationsForm input[type="submit"]:hover {
+    background-color: #c82333;
+}
+.notification-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+header {
+    background-color: #0056b3;
+    color: white;
+    padding: 15px 0;
+    text-align: center;
+    font-size: 24px;
+}
+
+/* Feedback Form Modal Styles */
+#feedbackModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    width: 80%;
+    max-width: 400px;
+}
+
+#feedbackForm {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Style adjustments for the radio buttons */
+#feedbackForm div {
+    margin-bottom: 10px;
+}
+
+#feedbackForm label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+#feedbackForm input[type="radio"] {
+    margin-right: 5px;
+}
+
+
+#feedbackForm input[type="number"],
+#feedbackForm input[type="checkbox"],
+#feedbackForm textarea {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#feedbackForm input[type="submit"] {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#feedbackForm input[type="submit"]:hover {
+    background-color: #218838;
+}
+
+/* Overlay for Modal Background */
+#feedbackModalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+/* Notification Container Styles */
+.notification-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.approve {
+    margin-right: 100px;
+}
+.button-container {
+    text-align: center; /* Center-aligns the content (the button) */
+    margin-top: 20px; /* Optional: Adds some space above the button */
+}
+
+.button-container button {
+    padding: 10px 20px; /* Adds padding inside the button for better sizing */
+    border: none; /* Removes the default border */
+    background-color: #007bff; /* Sets a background color */
+    color: white; /* Sets the text color */
+    border-radius: 5px; /* Optional: Rounds the corners of the button */
+    cursor: pointer; /* Changes cursor to pointer on hover */
+    transition: background-color 0.3s; /* Smooth transition for background color */
+}
+
+.button-container button:hover {
+    background-color: #0056b3; /* Changes background color on hover */
+}
+
+button {
+    background-color: #28a745; /* Green background */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 16px; /* Larger font size */
+    margin-top: 20px; /* Space above the button */
+}
+
+button:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+.feedback-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.feedback-button:hover {
+    background-color: #0056b3;
+}
+
+.notification-content {
+    flex-grow: 1;
+    padding-right: 20px; /* Adjust if necessary */
+}
+
+
+.notification-content p {
+    margin: 5px 0; /* Adjusts spacing of paragraphs inside the content */
+    line-height: 1.5; /* Improves readability of the text */
+    color: #333; /* Sets a specific text color, if needed */
+    /* Add any other text styling you need here */
+}

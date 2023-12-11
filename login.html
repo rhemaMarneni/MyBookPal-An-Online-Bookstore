@@ -86,10 +86,18 @@ function handleLogin() {
                     console.error('Error subscribing to the book:', data.error);
                     // Handle the error
                 } else {
-                    console.log(data.token);
+                    console.log('usertype in login:',data.token);
                     // Show a suitable alert message
-                    localStorage.setItem('token', data.token);  
+                    console.log('usertype in login:',data.userType);
+                    localStorage.setItem('token', data.token); 
+                    if(data.userType == 'customer')
                     window.location.href = 'listAllBooks.html';
+                    else if (data.userType == 'Customer Representative'){
+                        window.location.href = 'public_rep/index.html';
+                    }
+                    else if (data.userType == 'admin'){
+                        window.location.href = 'public_admin/index.html';
+                    }
                     // alert('Subscription successful. We will notify you when the book is available for purchase/lending through your preferred mode of notification');
                 }
             })
