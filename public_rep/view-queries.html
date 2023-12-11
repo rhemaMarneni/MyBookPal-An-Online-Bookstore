@@ -2,27 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>View History</title>
-    <link rel="stylesheet" href="assets/style.css" type="text/css">
+    <title>View Queries</title>
+    <link rel="stylesheet" href="./assets_rep/style.css" type="text/css">
 </head>
 <body>
     <header>
-        <h1>View Queries History</h1>
+        <h1>View Queries</h1>
     </header>
-    <div id="query_history"></div>
+    
+    <div id="queries"></div>
 
     <script>
         const backendURL = 'http://localhost:3000';
-
-        fetch(`${backendURL}/view_history`)
+        fetch(`${backendURL}/queries`)
             .then(response => response.json())
             .then(data => {
-                const queriesContainer = document.getElementById('query_history');
+                const queriesContainer = document.getElementById('queries');
+                console.log(data);
                 if (data && data.length) {
                     queriesContainer.innerHTML = '<ul>' + 
                         data.map(query => 
                             `<li>
-                                QUERY ID: ${query.query_id}<br> User ID: ${query.UserId}<br> Question: ${query.question}<br> Answer: ${query.answer}<br> Status: ${query.status}
+                                QUERY ID: ${query.query_id}, User ID: ${query.UserId}, Question: ${query.question}
+                                <button onclick="resolveQuery(${query.query_id}, ${query.UserId}, '${query.question.replace(/'/g, "\\'")}')">Resolve</button>
                             </li>`
                         ).join('') + 
                         '</ul>';
@@ -35,7 +37,10 @@
                 queriesContainer.innerHTML = '<p>Error loading queries.</p>';
             });
 
-        
+        function resolveQuery(queryId, UserId, question) {
+            localStorage.setItem('currentQuery', JSON.stringify({ queryId, UserId, question }));
+            window.location.href = 'submit-notification.html';
+        }
     </script>
 </body>
 </html>

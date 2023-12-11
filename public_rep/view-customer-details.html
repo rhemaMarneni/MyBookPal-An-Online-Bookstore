@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Customer Details</title>
+    <link rel="stylesheet" href="./assets_rep/style.css" type="text/css">
+</head>
+<body>
+    <header>
+        <h1>View Customer Details</h1>
+    </header>
+    
+    <div id="customer-details"></div>
+
+    <script>
+        
+        const backendURL = 'http://localhost:3000';
+        fetch(`${backendURL}/customer_details`)
+            .then(response => response.json())
+            .then(data => {
+                const queriesContainer = document.getElementById('customer-details');
+                if (data && data.length) {
+                    queriesContainer.innerHTML = '<ul>' + 
+                        data.map(query => 
+                        `<li>
+                            User ID: ${query.UserID}<br>
+                            First Name: ${query.FirstName}<br>
+                            Last Name: ${query.LastName}<br>
+                            Phone: ${query.PhoneNumber}<br>
+                            Email: ${query.Email}<br>
+                            Address: ${query.UserAddress}<br>
+                            User Since: ${query.UserCreatedAt}<br>
+                            Last Login: ${query.LastLogin}<br>
+                            <button onclick="resolveQuery(${query.UserID})">Modify User Details</button>
+                        </li>`
+
+
+                        ).join('') + 
+                        '</ul>';
+                } else {
+                    queriesContainer.innerHTML = '<p>No queries found.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                queriesContainer.innerHTML = '<p>Error loading queries.</p>';
+            });
+
+        function resolveQuery(userId) {
+            localStorage.setItem('currentQuery', JSON.stringify({ userId }));
+            console.log(userId);
+            window.location.href = 'Modify-User-Details.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FAQ Page</title>
+    <link rel="stylesheet" href="./assets_faq/style.css" type="text/css">
+</head>
+<body>
+    <header><h1>FAQ</h1></header>
+    <div id="statisticsTable"></div>
+
+    <script>
+        // Function to fetch and display statistics
+        function fetchAndDisplayStatistics() {
+            const backendURL = 'http://localhost:3000';
+            fetch(`${backendURL}/faq`) // Adjust URL as needed
+                .then(response => response.json())
+                .then(data => {
+                    const statsTable = document.getElementById('statisticsTable');
+                    if (data.queries && data.queries.length) {
+                        // Create table headers
+                        let tableHtml = '<table><tr><th>Question</th><th>Answer</th></tr>';
+
+                        // Add rows to the table
+                        data.queries.forEach(query => {
+                            tableHtml += `
+                                <tr>
+                                    <td>${query.question}</td>
+                                    <td>${query.answer}</td>
+                                </tr>
+                            `;
+                        });
+
+                        tableHtml += '</table>';
+                        statsTable.innerHTML = tableHtml;
+                    } else {
+                        statsTable.innerHTML = '<p>No statistics found.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('statisticsTable').innerHTML = '<p>Error loading statistics.</p>';
+                });
+        }
+
+        // Call the function on load
+        fetchAndDisplayStatistics();
+    </script>
+</body>
+</html>

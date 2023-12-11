@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add customer Representative</title>
+    <link rel="stylesheet" href="./assets_admin/style.css" type="text/css"> <!-- Link to your CSS file -->
+</head>
+<body>
+    <header>
+        <h1>Add customer Representative</h1>
+    </header>
+    <form id="queryForm">
+        <label for="id">Enter User id To Make as Customer Representative:</label><br>
+        <textarea id="id" name="id" required></textarea><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        document.getElementById('queryForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('id').value;
+    const backendURL = 'http://localhost:3000';
+    fetch(`${backendURL}/add_rep`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `id=${encodeURIComponent(id)}`
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('User ID not found');
+        }
+        return response.text();
+    })
+    .then(data => {
+        alert(data); // Display success message
+        document.getElementById('queryForm').reset();
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        alert(error.message); // Display error message
+    });
+});
+
+    </script>
+</body>
+</html>
