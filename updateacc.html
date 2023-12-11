@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Update Account Details</title>
+   <style>
+       body {
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           min-height: 100vh;
+           margin: 0;
+           background-image: url('https://informationmatters.org/wp-content/uploads/2022/09/stock-image-231398112-L-800x445.jpg'); /* Reference to your background image */
+           background-size: cover;
+           background-position: center;
+           background-repeat: no-repeat;
+       }
+
+
+       .form-container {
+           padding: 20px;
+           background-color: rgba(255, 255, 255, 0.8); /* Slight transparency to show the background */
+           border-radius: 10px;
+           box-shadow: 0 0 10px rgba(0,0,0,0.1);
+           width: fit-content;
+       }
+
+
+       .form-group {
+           position: relative;
+           margin-bottom: 15px;
+       }
+
+
+       .input-icon-container {
+           position: relative;
+       }
+
+
+       .input-icon-container input {
+           width: 100%;
+           padding: 10px 30px 10px 10px;
+           border: 1px solid #ddd;
+           border-radius: 5px;
+           box-sizing: border-box;
+       }
+
+
+       .input-icon-container i {
+           position: absolute;
+           right: 10px;
+           top: 50%;
+           transform: translateY(-50%) scaleX(-1); /* Mirroring the icon */
+           cursor: pointer;
+       }
+
+
+       label {
+           display: block;
+           margin-bottom: 5px;
+       }
+
+
+       .button-group {
+           display: flex;
+           justify-content: space-between;
+       }
+
+
+       button {
+           padding: 10px;
+           color: white;
+           border: none;
+           border-radius: 5px;
+           cursor: pointer;
+           flex: 1; /* Equal width */
+           margin: 5px;
+       }
+
+
+       .update-button {
+           background-color: #007bff;
+       }
+
+
+       .cancel-button {
+           background-color: #dc3545;
+       }
+
+
+       button:hover {
+           opacity: 0.9;
+       }
+   </style>
+</head>
+<body>
+   <div class="form-container">
+       <form id="updateForm">
+           <h2>Update Account Details</h2>
+           <div class="form-group">
+               <label for="firstName">First Name:</label>
+               <div class="input-icon-container">
+                   <input type="text" id="firstName" name="firstName" value="John" required>
+                   <i class="edit-icon" onclick="enableEditing('firstName')">&#x270E;</i>
+               </div>
+           </div>
+           <div class="form-group">
+               <label for="lastName">Last Name:</label>
+               <div class="input-icon-container">
+                   <input type="text" id="lastName" name="lastName" value="Doe" required>
+                   <i class="edit-icon" onclick="enableEditing('lastName')">&#x270E;</i>
+               </div>
+           </div>
+           <div class="form-group">
+               <label for="email">Email Address:</label>
+               <div class="input-icon-container">
+                   <input type="email" id="email" name="email" value="johndoe@example.com" required>
+                   <i class="edit-icon" onclick="enableEditing('email')">&#x270E;</i>
+               </div>
+           </div>
+           <div class="form-group">
+               <label for="phone">Phone Number:</label>
+               <div class="input-icon-container">
+                   <input type="tel" id="phone" name="phone" value="123-456-7890">
+                   <i class="edit-icon" onclick="enableEditing('phone')">&#x270E;</i>
+               </div>
+           </div>
+           <div class="form-group">
+               <label for="address">Address:</label>
+               <div class="input-icon-container">
+                   <input type="text" id="address" name="address" value="1234 Main St">
+                   <i class="edit-icon" onclick="enableEditing('address')">&#x270E;</i>
+               </div>
+           </div>
+           <div class="form-group">
+               <label for="newPassword">New Password:</label>
+               <div class="input-icon-container">
+                   <input type="password" id="newPassword" name="newPassword">
+                   <i class="edit-icon" onclick="enableEditing('newPassword')">&#x270E;</i>
+               </div>
+           </div>
+           <div class="form-group">
+               <label for="confirmPassword">Confirm Password:</label>
+               <div class="input-icon-container">
+                   <input type="password" id="confirmPassword" name="confirmPassword">
+                   <i class="edit-icon" onclick="enableEditing('confirmPassword')">&#x270E;</i>
+               </div>
+           </div>
+           <div class="button-group">
+               <button type="submit" class="update-button">Update Details</button>
+               <button type="button" class="cancel-button" onclick="resetForm()">Cancel</button>
+           </div>
+       </form>
+   </div>
+   <script>
+       function enableEditing(id) {
+           document.getElementById(id).disabled = false;
+           document.getElementById(id).focus();
+       }
+
+
+       function resetForm() {
+           document.getElementById('updateForm').reset();
+           // You can add any other actions you want to perform on cancel here
+       }
+
+
+       document.getElementById('updateForm').addEventListener('submit', function(event) {
+           event.preventDefault();
+           const newPassword = document.getElementById('newPassword').value;
+           const confirmPassword = document.getElementById('confirmPassword').value;
+
+
+           if (newPassword !== confirmPassword) {
+               alert('Passwords do not match.');
+               return;
+           }
+
+
+           // Proceed with form submission or API call to update details
+
+
+           alert('Account details updated successfully!');
+       });
+   </script>
+</body>
+</html>
