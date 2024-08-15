@@ -10,7 +10,7 @@ Enhanced features with automatic and manual bidding, active listing monitoring, 
 4. Customer Representatives
 
 ## Technologies
-Node.js (backend), MySQL, HTML, CSS, Python (for web scraping book data)
+Node.js, Express, React, MySQL, HTML, CSS, Python (for web scraping book data)
 
 Unit testing framework: Jasmine
 
